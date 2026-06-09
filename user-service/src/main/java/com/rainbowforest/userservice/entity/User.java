@@ -2,7 +2,7 @@ package com.rainbowforest.userservice.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table (name = "users")
@@ -15,7 +15,7 @@ public class User {
 
     @Column (name = "user_name", nullable = false, unique = true, length = 50)
     private String userName;
-    @Column (name = "user_password", nullable = false, length = 50)
+    @Column (name = "user_password", nullable = false, length = 255)
     private String userPassword;
     @Column (name = "active")
     private int active;

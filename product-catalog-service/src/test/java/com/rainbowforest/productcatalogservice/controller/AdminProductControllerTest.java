@@ -9,14 +9,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -24,7 +22,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rainbowforest.productcatalogservice.entity.Product;
 import com.rainbowforest.productcatalogservice.service.ProductService;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 public class AdminProductControllerTest {
@@ -54,9 +51,9 @@ public class AdminProductControllerTest {
         when(productService.addProduct(new Product())).thenReturn(product);
 
         //then
-        mockMvc.perform(post("/admin/products").content(requestJson).contentType(MediaType.APPLICATION_JSON_UTF8))
+        mockMvc.perform(post("/admin/products").content(requestJson).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.productName").value(PRODUCT_NAME))
                 .andExpect(jsonPath("$.category").value(PRODUCT_CATEGORY));
 
@@ -74,7 +71,7 @@ public class AdminProductControllerTest {
         String requestJson = objectWriter.writeValueAsString(product);
 
         //then
-        mockMvc.perform(post("/admin/products").content(requestJson).contentType(MediaType.APPLICATION_JSON_UTF8))
+        mockMvc.perform(post("/admin/products").content(requestJson).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());	
 	}
 }

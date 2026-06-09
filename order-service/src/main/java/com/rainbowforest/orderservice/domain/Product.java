@@ -1,8 +1,8 @@
 package com.rainbowforest.orderservice.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -24,6 +24,9 @@ public class Product {
     @Column (name = "price")
     @NotNull
     private BigDecimal price;
+
+    @Column (name = "image_url", length = 500)
+    private String imageUrl;
 
     @OneToMany (mappedBy = "product", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -51,6 +54,14 @@ public class Product {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public List<Item> getItems() {

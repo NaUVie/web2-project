@@ -11,20 +11,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.ArrayList;
 import java.util.List;
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import com.rainbowforest.orderservice.domain.Item;
 import com.rainbowforest.orderservice.domain.Order;
 import com.rainbowforest.orderservice.domain.Product;
@@ -33,7 +31,6 @@ import com.rainbowforest.orderservice.feignclient.UserClient;
 import com.rainbowforest.orderservice.service.CartService;
 import com.rainbowforest.orderservice.service.OrderService;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 public class OrderControllerTest {
@@ -60,7 +57,7 @@ public class OrderControllerTest {
 	@Autowired
 	private WebApplicationContext webApplicationContext;
 
-	@Before()
+	@BeforeEach
 	public void setup()
 	{
 	    mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
@@ -96,7 +93,7 @@ public class OrderControllerTest {
 		
 		mockMvc.perform(post("/order/{userId}", USER_ID).cookie(new Cookie[] {cookie}))
         .andExpect(status().isCreated())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.items").isArray());
 
 		verify(orderService, times(1)).saveOrder(any(Order.class));

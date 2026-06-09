@@ -2,21 +2,18 @@ package com.rainbowforest.userservice.service;
 
 import com.rainbowforest.userservice.entity.User;
 import com.rainbowforest.userservice.repository.UserRepository;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.List;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 public class UserServiceTests {
 
@@ -31,7 +28,7 @@ public class UserServiceTests {
     @InjectMocks
     private UserServiceImpl userService;
 
-    @Before
+    @BeforeEach
     public void setUp(){
         user = new User();
         user.setId(USER_ID);

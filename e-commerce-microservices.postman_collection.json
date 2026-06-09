@@ -1,0 +1,559 @@
+{
+	"info": {
+		"_postman_id": "e229e6be-2715-4ba8-bbdf-8c504ddee98a",
+		"name": "E-Commerce Microservices",
+		"description": "Collection for testing E-Commerce Microservices through the API Gateway (Port 8900).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication & Accounts",
+			"item": [
+				{
+					"name": "Register Regular User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userName\": \"test_postman_user\",\n  \"userPassword\": \"password123\",\n  \"userDetails\": {\n    \"firstName\": \"Postman\",\n    \"lastName\": \"User\",\n    \"email\": \"postman@example.com\",\n    \"phoneNumber\": \"0987654321\",\n    \"street\": \"Nguyen Trai\",\n    \"streetNumber\": \"123\",\n    \"zipCode\": \"70000\",\n    \"locality\": \"District 5\",\n    \"country\": \"Vietnam\"\n  }\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8900/api/accounts/registration",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"accounts",
+								"registration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register Admin User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userName\": \"admin_user\",\n  \"userPassword\": \"password123\",\n  \"role\": {\n    \"roleName\": \"ROLE_ADMIN\"\n  },\n  \"userDetails\": {\n    \"firstName\": \"Admin\",\n    \"lastName\": \"System\",\n    \"email\": \"admin@example.com\",\n    \"phoneNumber\": \"0123456789\",\n    \"street\": \"Admin Street\",\n    \"streetNumber\": \"1\",\n    \"zipCode\": \"10000\",\n    \"locality\": \"Hanoi\",\n    \"country\": \"Vietnam\"\n  }\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8900/api/accounts/registration",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"accounts",
+								"registration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Regular User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
+									"}",
+									"if (jsonData.userId) {",
+									"    pm.collectionVariables.set(\"userId\", jsonData.userId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"test_postman_user\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8900/api/accounts/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"accounts",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Admin User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
+									"}",
+									"if (jsonData.userId) {",
+									"    pm.collectionVariables.set(\"userId\", jsonData.userId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin_user\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8900/api/accounts/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"accounts",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users (Admin Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/accounts/users",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"accounts",
+								"users"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Product Catalog",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/catalog/products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"catalog",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/catalog/products/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"catalog",
+								"products",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product (Admin Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productName\": \"Custom Gaming Controller\",\n  \"price\": 79.99,\n  \"discription\": \"Wireless controller with custom triggers.\",\n  \"category\": \"Accessories\",\n  \"availability\": 50,\n  \"imageUrl\": \"https://images.unsplash.com/photo-1600861195091-690c92f1d2cc\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8900/api/catalog/products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"catalog",
+								"products"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Shopping Cart",
+			"item": [
+				{
+					"name": "Get Cart Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/shop/cart",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"shop",
+								"cart"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Product to Cart",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/shop/cart?productId=1&quantity=2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"shop",
+								"cart"
+							],
+							"query": [
+								{
+									"key": "productId",
+									"value": "1"
+								},
+								{
+									"key": "quantity",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Product from Cart",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/shop/cart?productId=1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"shop",
+								"cart"
+							],
+							"query": [
+								{
+									"key": "productId",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order Checkout",
+			"item": [
+				{
+					"name": "Checkout Cart",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/shop/order/{{userId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"shop",
+								"order",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Product Recommendations",
+			"item": [
+				{
+					"name": "Get Recommendations for Product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/review/recommendations?name=MacBook Pro M3 Max",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"review",
+								"recommendations"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "MacBook Pro M3 Max"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Recommendation (Protected)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/review/{{userId}}/recommendations/1?rating=5",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"review",
+								"{{userId}}",
+								"recommendations",
+								"1"
+							],
+							"query": [
+								{
+									"key": "rating",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Recommendation (Protected)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8900/api/review/recommendations/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"review",
+								"recommendations",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

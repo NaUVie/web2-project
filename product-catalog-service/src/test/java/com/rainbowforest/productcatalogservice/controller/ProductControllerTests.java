@@ -1,16 +1,15 @@
 package com.rainbowforest.productcatalogservice.controller;
+
 import com.rainbowforest.productcatalogservice.entity.Product;
 import com.rainbowforest.productcatalogservice.service.ProductService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 public class ProductControllerTests {
@@ -35,7 +33,7 @@ public class ProductControllerTests {
     @MockBean
     private ProductService productService;
 
-    @Before
+    @BeforeEach
     public void setUp(){
         product = new Product();
         product.setId(PRODUCT_ID);
@@ -43,18 +41,16 @@ public class ProductControllerTests {
         product.setCategory(PRODUCT_CATEGORY);
         products = new ArrayList<Product>();
         products.add(product);
-
     }
 
     @Test
     public void  get_all_products_controller_should_return200_when_validRequest() throws Exception {
     	//when
     	when(productService.getAllProduct()).thenReturn(products);
-//        given(productService.getAllProduct()).willReturn(products);
 
         mockMvc.perform(get("/products"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].id").value(PRODUCT_ID))
                 .andExpect(jsonPath("$[0].productName").value(PRODUCT_NAME));
 
@@ -73,13 +69,11 @@ public class ProductControllerTests {
     	//then
     	mockMvc.perform(get("/products"))
         .andExpect(status().isNotFound())
-        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_UTF8));
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
 
     	verify(productService, Mockito.times(1)).getAllProduct();
     	verifyNoMoreInteractions(productService);
     }
-    	
-    	
     	
     @Test
     public void get_all_product_by_category_controller_should_return200_when_validRequest() throws Exception {
@@ -89,7 +83,7 @@ public class ProductControllerTests {
         //then
         mockMvc.perform(get("/products").param("category", PRODUCT_CATEGORY))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].id").value(PRODUCT_ID))
                 .andExpect(jsonPath("$[0].category").value(PRODUCT_CATEGORY));
 
@@ -108,7 +102,7 @@ public class ProductControllerTests {
         //then
         mockMvc.perform(get("/products").param("category", PRODUCT_CATEGORY))
                 .andExpect(status().isNotFound())
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_UTF8));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
 
         verify(productService, times(1)).getAllProductByCategory(anyString());
         verifyNoMoreInteractions(productService);
@@ -121,7 +115,7 @@ public class ProductControllerTests {
         
         //then
         mockMvc.perform(get("/products/{id}", PRODUCT_ID))
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(PRODUCT_ID))
                 .andExpect(jsonPath("$.productName").value(PRODUCT_NAME))
@@ -138,7 +132,7 @@ public class ProductControllerTests {
         
         //then
         mockMvc.perform(get("/products/{id}", PRODUCT_ID))
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
                 .andExpect(status().isNotFound());
 
         verify(productService, times(1)).getProductById(PRODUCT_ID);

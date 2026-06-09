@@ -5,14 +5,12 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rainbowforest.userservice.entity.User;
 import com.rainbowforest.userservice.service.UserService;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +19,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 public class UserControllerTests {
@@ -52,7 +49,7 @@ public class UserControllerTests {
     	//then
         mockMvc.perform(get("/users"))
         .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$[0].id").value(USER_ID))
         .andExpect(jsonPath("$[0].userName").value(USER_NAME));
 
@@ -70,7 +67,7 @@ public class UserControllerTests {
     	//then
         mockMvc.perform(get("/users"))
         .andExpect(status().isNotFound())
-        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_UTF8_VALUE));
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
 
         verify(userService, times(1)).getAllUsers();
         verifyNoMoreInteractions(userService);
@@ -89,7 +86,7 @@ public class UserControllerTests {
     	//then
     	mockMvc.perform(get("/users").param("name", USER_NAME))
         .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(USER_ID))
         .andExpect(jsonPath("$.userName").value(USER_NAME));
 
@@ -105,7 +102,7 @@ public class UserControllerTests {
     	//then
     	mockMvc.perform(get("/users").param("name", USER_NAME))
         .andExpect(status().isNotFound())
-        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_UTF8_VALUE));
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
 
     	verify(userService, times(1)).getUserByName(anyString());
     	verifyNoMoreInteractions(userService); 
@@ -124,7 +121,7 @@ public class UserControllerTests {
     	//then
     	mockMvc.perform(get("/users/{id}", USER_ID))
     	.andExpect(status().isOk())
-    	.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+    	.andExpect(content().contentType(MediaType.APPLICATION_JSON))
     	.andExpect(jsonPath("$.id").value(USER_ID))
     	.andExpect(jsonPath("$.userName").value(USER_NAME));
 
@@ -140,7 +137,7 @@ public class UserControllerTests {
     	//then
     	mockMvc.perform(get("/users/{id}", USER_ID))
     	.andExpect(status().isNotFound())
-    	.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_UTF8_VALUE));
+    	.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
 
     	verify(userService, times(1)).getUserById(anyLong());
     	verifyNoMoreInteractions(userService);
@@ -160,9 +157,9 @@ public class UserControllerTests {
     	when(userService.saveUser(new User())).thenReturn(user);
     	
     	//then
-    	mockMvc.perform(post("/users").content(requestJson).contentType(MediaType.APPLICATION_JSON_UTF8))
+    	mockMvc.perform(post("/users").content(requestJson).contentType(MediaType.APPLICATION_JSON))
     	.andExpect(status().isCreated())
-    	.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+    	.andExpect(content().contentType(MediaType.APPLICATION_JSON))
     	.andExpect(jsonPath("$.userName").value(USER_NAME));
     	
     	verify(userService, times(1)).saveUser(any(User.class));
@@ -179,9 +176,7 @@ public class UserControllerTests {
         String requestJson = objectWriter.writeValueAsString(user);
           	
     	//then
-    	mockMvc.perform(post("/users").content(requestJson).contentType(MediaType.APPLICATION_JSON_UTF8))
+    	mockMvc.perform(post("/users").content(requestJson).contentType(MediaType.APPLICATION_JSON))
     	.andExpect(status().isBadRequest());
-
-    	
     }
 }

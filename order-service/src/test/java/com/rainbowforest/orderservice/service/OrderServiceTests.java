@@ -1,22 +1,17 @@
 package com.rainbowforest.orderservice.service;
 
-
 import com.rainbowforest.orderservice.domain.Order;
 import com.rainbowforest.orderservice.repository.OrderRepository;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-
-@RunWith(SpringRunner.class)
 @SpringBootTest
 public class OrderServiceTests {
 
@@ -30,7 +25,7 @@ public class OrderServiceTests {
     @InjectMocks
     private OrderServiceImpl orderService;
 
-    @Before
+    @BeforeEach
     public void setUp(){
         order = new Order();
         order.setId(ORDER_ID);
@@ -47,8 +42,5 @@ public class OrderServiceTests {
         assertEquals(created.getStatus(), ORDER_STATUS);
         verify(orderRepository, times(1)).save(any(Order.class));
         verifyNoMoreInteractions(orderRepository);
-
     }
-
-
 }

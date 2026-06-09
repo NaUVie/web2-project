@@ -2,22 +2,17 @@ package com.rainbowforest.productcatalogservice.service;
 
 import com.rainbowforest.productcatalogservice.entity.Product;
 import com.rainbowforest.productcatalogservice.repository.ProductRepository;
-import org.junit.Before;
-import org.junit.*;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.Matchers.any;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 public class ProductServiceTests {
 
@@ -34,7 +29,7 @@ public class ProductServiceTests {
     @InjectMocks
     private ProductServiceImpl productService;
 
-    @Before
+    @BeforeEach
     public void setUp(){
         product = new Product();
         product.setId(PRODUCT_ID);
@@ -102,5 +97,4 @@ public class ProductServiceTests {
         Mockito.verify(productRepository, Mockito.times(1)).findAllByProductName(Mockito.anyString());
         Mockito.verifyNoMoreInteractions(productRepository);
     }
-
 }

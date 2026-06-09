@@ -73,4 +73,41 @@ public class ProductController {
         		headerGenerator.getHeadersForError(),
         		HttpStatus.NOT_FOUND);
     }
+
+    @PostMapping(value = "/products")
+    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+        try {
+            Product savedProduct = productService.addProduct(product);
+            return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping(value = "/products/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable("id") Long id, @RequestBody Product product) {
+        Product existingProduct = productService.getProductById(id);
+        if (existingProduct == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        existingProduct.setProductName(product.getProductName());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setDiscription(product.getDiscription());
+        existingProduct.setCategory(product.getCategory());
+        existingProduct.setAvailability(product.getAvailability());
+        existingProduct.setImageUrl(product.getImageUrl());
+        
+        Product savedProduct = productService.addProduct(existingProduct);
+        return new ResponseEntity<>(savedProduct, HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = "/products/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id) {
+        Product existingProduct = productService.getProductById(id);
+        if (existingProduct == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        productService.deleteProduct(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }

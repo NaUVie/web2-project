@@ -4,23 +4,20 @@ import com.rainbowforest.recommendationservice.model.Product;
 import com.rainbowforest.recommendationservice.model.Recommendation;
 import com.rainbowforest.recommendationservice.model.User;
 import com.rainbowforest.recommendationservice.repository.RecommendationRepository;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 public class RecommendationServiceTests {
 
@@ -39,7 +36,7 @@ public class RecommendationServiceTests {
     @InjectMocks
     private RecommendationServiceImpl recommendationService;
 
-    @Before
+    @BeforeEach
     public void setUp(){
         user = new User();
         user.setUserName(USER_NAME);

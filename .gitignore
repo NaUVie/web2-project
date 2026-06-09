@@ -1,0 +1,10 @@
+# Logs
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Build
+**/target/
