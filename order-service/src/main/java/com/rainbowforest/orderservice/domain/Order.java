@@ -32,6 +32,18 @@ public class Order {
     @ManyToOne (cascade = {CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn (name = "user_id")
     private User user;
+
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "shipping_address")
+    private String shippingAddress;
+
+    @Column(name = "payment_method")
+    private String paymentMethod;
     
 	public Order() {
 		
@@ -83,5 +95,37 @@ public class Order {
 
 	public void setUser(User user) {
 		this.user = user;
+	}
+
+	public String getFullName() {
+		return fullName;
+	}
+
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
+	}
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public String getShippingAddress() {
+		return shippingAddress;
+	}
+
+	public void setShippingAddress(String shippingAddress) {
+		this.shippingAddress = shippingAddress;
+	}
+
+	public String getPaymentMethod() {
+		return paymentMethod;
+	}
+
+	public void setPaymentMethod(String paymentMethod) {
+		this.paymentMethod = paymentMethod;
 	}
 }

@@ -78,4 +78,59 @@ public class UserController {
 		}
     	return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
     }
+
+    @GetMapping("/users/check-username")
+    public ResponseEntity<java.util.Map<String, Boolean>> checkUsername(@RequestParam("username") String username) {
+        boolean exists = userService.getUserByName(username) != null;
+        java.util.Map<String, Boolean> response = new java.util.HashMap<>();
+        response.put("exists", exists);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/users/check-email")
+    public ResponseEntity<java.util.Map<String, Boolean>> checkEmail(@RequestParam("email") String email) {
+        boolean exists = userService.getUserByEmail(email) != null;
+        java.util.Map<String, Boolean> response = new java.util.HashMap<>();
+        response.put("exists", exists);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<User> updateUserProfile(@PathVariable("id") Long id, @RequestBody User updatedUser) {
+        User user = userService.updateUserProfile(id, updatedUser);
+        if (user != null) {
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @PutMapping("/users/{id}/change-password")
+    public ResponseEntity<Void> changePassword(@PathVariable("id") Long id, @RequestBody java.util.Map<String, String> payload) {
+        String newPassword = payload.get("newPassword");
+        User user = userService.changePassword(id, null, newPassword);
+        if (user != null) {
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @PutMapping("/users/{id}/role")
+    public ResponseEntity<User> updateUserRole(@PathVariable("id") Long id, @RequestBody java.util.Map<String, String> payload) {
+        String roleName = payload.get("roleName");
+        User user = userService.updateUserRole(id, roleName);
+        if (user != null) {
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
+        try {
+            userService.deleteUser(id);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }

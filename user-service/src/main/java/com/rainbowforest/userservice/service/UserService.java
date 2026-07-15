@@ -9,4 +9,9 @@ public interface UserService {
     User getUserById(Long id);
     User getUserByName(String userName);
     User saveUser(User user);
+    User getUserByEmail(String email);
+    User updateUserProfile(Long id, User userDetails);
+    User changePassword(Long id, String oldPassword, String newPassword);
+    void deleteUser(Long id);
+    User updateUserRole(Long id, String roleName);
 }

@@ -23,6 +23,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private com.rainbowforest.userservice.kafka.UserProfileEventProducer userProfileEventProducer;
+
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -65,5 +68,106 @@ public class UserServiceImpl implements UserService {
 
         user.setRole(role);
         return userRepository.save(user);
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public User updateUserProfile(Long id, User updatedUser) {
+        User existingUser = userRepository.findById(id).orElse(null);
+        if (existingUser != null) {
+            boolean detailsChanged = false;
+            String newPhone = null;
+            String newStreet = null;
+            String newStreetNum = null;
+            String newZip = null;
+            String newLocal = null;
+            String newCountry = null;
+
+            if (updatedUser.getUserDetails() != null) {
+                com.rainbowforest.userservice.entity.UserDetails existingDetails = existingUser.getUserDetails();
+                com.rainbowforest.userservice.entity.UserDetails updatedDetails = updatedUser.getUserDetails();
+                if (existingDetails == null) {
+                    existingDetails = new com.rainbowforest.userservice.entity.UserDetails();
+                }
+                existingDetails.setFirstName(updatedDetails.getFirstName());
+                existingDetails.setLastName(updatedDetails.getLastName());
+                existingDetails.setPhoneNumber(updatedDetails.getPhoneNumber());
+                existingDetails.setStreet(updatedDetails.getStreet());
+                existingDetails.setStreetNumber(updatedDetails.getStreetNumber());
+                existingDetails.setZipCode(updatedDetails.getZipCode());
+                existingDetails.setLocality(updatedDetails.getLocality());
+                existingDetails.setCountry(updatedDetails.getCountry());
+                existingUser.setUserDetails(existingDetails);
+
+                detailsChanged = true;
+                newPhone = updatedDetails.getPhoneNumber();
+                newStreet = updatedDetails.getStreet();
+                newStreetNum = updatedDetails.getStreetNumber();
+                newZip = updatedDetails.getZipCode();
+                newLocal = updatedDetails.getLocality();
+                newCountry = updatedDetails.getCountry();
+            }
+            if (updatedUser.getUserPassword() != null && !updatedUser.getUserPassword().isEmpty()) {
+                existingUser.setUserPassword(passwordEncoder.encode(updatedUser.getUserPassword()));
+            }
+            
+            User saved = userRepository.save(existingUser);
+            
+            // Publish Event to Kafka
+            if (detailsChanged) {
+                try {
+                    com.rainbowforest.userservice.kafka.UserProfileUpdatedEvent event = 
+                        new com.rainbowforest.userservice.kafka.UserProfileUpdatedEvent(
+                            saved.getId(),
+                            newPhone,
+                            newStreet,
+                            newStreetNum,
+                            newZip,
+                            newLocal,
+                            newCountry
+                        );
+                    userProfileEventProducer.sendProfileUpdatedEvent(event);
+                } catch (Exception ex) {
+                    System.err.println("Failed to publish profile update event: " + ex.getMessage());
+                }
+            }
+            return saved;
+        }
+        return null;
+    }
+
+    @Override
+    public User changePassword(Long id, String oldPassword, String newPassword) {
+        User existingUser = userRepository.findById(id).orElse(null);
+        if (existingUser != null) {
+            existingUser.setUserPassword(passwordEncoder.encode(newPassword));
+            return userRepository.save(existingUser);
+        }
+        return null;
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    @Override
+    public User updateUserRole(Long id, String roleName) {
+        User existingUser = userRepository.findById(id).orElse(null);
+        if (existingUser != null) {
+            UserRole role = userRoleRepository.findUserRoleByRoleName(roleName);
+            if (role == null) {
+                role = new UserRole();
+                role.setRoleName(roleName);
+                role = userRoleRepository.save(role);
+            }
+            existingUser.setRole(role);
+            return userRepository.save(existingUser);
+        }
+        return null;
     }
 }

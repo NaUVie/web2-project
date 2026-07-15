@@ -96,6 +96,7 @@ public class ProductController {
         existingProduct.setCategory(product.getCategory());
         existingProduct.setAvailability(product.getAvailability());
         existingProduct.setImageUrl(product.getImageUrl());
+        existingProduct.setPromoPrice(product.getPromoPrice());
         
         Product savedProduct = productService.addProduct(existingProduct);
         return new ResponseEntity<>(savedProduct, HttpStatus.OK);

@@ -1,6 +1,14 @@
-version: '3.8'
-
 services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: zookeeper
@@ -31,4 +39,111 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+    restart: always
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    restart: always
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8900:8900"
+    environment:
+      EUREKA_HOST: eureka-server
+    depends_on:
+      - eureka-server
+    restart: always
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "8811:8811"
+    environment:
+      DB_HOST: db
+      EUREKA_HOST: eureka-server
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    depends_on:
+      - db
+      - eureka-server
+    restart: always
+
+  product-catalog-service:
+    build: ./product-catalog-service
+    container_name: product-catalog-service
+    ports:
+      - "8810:8810"
+    environment:
+      DB_HOST: db
+      EUREKA_HOST: eureka-server
+      KAFKA_HOST: kafka
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+    depends_on:
+      - db
+      - eureka-server
+      - kafka
+    restart: always
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8813:8813"
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+      KAFKA_HOST: kafka
+      EUREKA_HOST: eureka-server
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    depends_on:
+      - db
+      - redis
+      - kafka
+      - eureka-server
+    restart: always
+
+  product-recommendation-service:
+    build: ./product-recommendation-service
+    container_name: product-recommendation-service
+    ports:
+      - "8812:8812"
+    environment:
+      DB_HOST: db
+      EUREKA_HOST: eureka-server
+    depends_on:
+      - db
+      - eureka-server
+    restart: always
+
+  chatbot-service:
+    build: ./chatbot-service
+    container_name: chatbot-service
+    ports:
+      - "8814:8814"
+    environment:
+      EUREKA_HOST: eureka-server
+      GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
+    depends_on:
+      - eureka-server
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: nexus-frontend
+    ports:
+      - "3000:80"
+    environment:
+      VITE_API_BASE: http://localhost:8900/api
+      VITE_GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
+    depends_on:
+      - api-gateway
     restart: always

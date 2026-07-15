@@ -8,3 +8,7 @@
 
 # Build
 **/target/
+
+# Local Environment Variables
+.env
+

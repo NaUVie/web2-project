@@ -37,13 +37,19 @@ start "Product Recommendation Service" cmd /k ".\mvnw.cmd spring-boot:run"
 cd ..
 timeout /t 5
 
-echo [5/6] Launching Order Service (Port 8813)...
+echo [5/7] Launching Order Service (Port 8813)...
 cd order-service
 start "Order Service" cmd /k ".\mvnw.cmd spring-boot:run"
 cd ..
 timeout /t 5
 
-echo [6/6] Launching API Gateway (Port 8900)...
+echo [6/7] Launching Chatbot Service (Port 8814)...
+cd chatbot-service
+start "Chatbot Service" cmd /k ".\mvnw.cmd spring-boot:run"
+cd ..
+timeout /t 5
+
+echo [7/7] Launching API Gateway (Port 8900)...
 cd api-gateway
 start "API Gateway" cmd /k ".\mvnw.cmd spring-boot:run"
 cd ..

@@ -36,6 +36,9 @@ public class Product {
     @Column (name = "image_url", length = 500)
     private String imageUrl;
 
+    @Column (name = "promo_price")
+    private BigDecimal promoPrice;
+
 	public Product() {
 
 	}
@@ -94,5 +97,13 @@ public class Product {
 
 	public void setImageUrl(String imageUrl) {
 		this.imageUrl = imageUrl;
+	}
+
+	public BigDecimal getPromoPrice() {
+		return promoPrice;
+	}
+
+	public void setPromoPrice(BigDecimal promoPrice) {
+		this.promoPrice = promoPrice;
 	}
 }
