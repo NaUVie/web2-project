@@ -7,7 +7,10 @@ services:
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql-data:/var/lib/mysql
     restart: always
+
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -69,9 +72,14 @@ services:
       EUREKA_HOST: eureka-server
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
+      REDIS_HOST: redis
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 29092
     depends_on:
       - db
       - eureka-server
+      - redis
+      - kafka
     restart: always
 
   product-catalog-service:
@@ -83,6 +91,7 @@ services:
       DB_HOST: db
       EUREKA_HOST: eureka-server
       KAFKA_HOST: kafka
+      KAFKA_PORT: 29092
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
@@ -101,6 +110,7 @@ services:
       DB_HOST: db
       REDIS_HOST: redis
       KAFKA_HOST: kafka
+      KAFKA_PORT: 29092
       EUREKA_HOST: eureka-server
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
@@ -136,6 +146,17 @@ services:
       - eureka-server
     restart: always
 
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8815:8815"
+    environment:
+      EUREKA_HOST: eureka-server
+    depends_on:
+      - eureka-server
+    restart: always
+
   frontend:
     build: ./frontend
     container_name: nexus-frontend
@@ -147,3 +168,7 @@ services:
     depends_on:
       - api-gateway
     restart: always
+
+volumes:
+  mysql-data:
+

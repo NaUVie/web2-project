@@ -69,7 +69,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (Order order : orders) {
             String status = order.getStatus();
-            if ("COMPLETED".equalsIgnoreCase(status) || "PAID".equalsIgnoreCase(status)) {
+            if ("COMPLETED".equalsIgnoreCase(status) || "DELIVERED".equalsIgnoreCase(status) || "PAID".equalsIgnoreCase(status)) {
                 completedCount++;
                 if (order.getTotal() != null) {
                     totalRevenue = totalRevenue.add(order.getTotal());

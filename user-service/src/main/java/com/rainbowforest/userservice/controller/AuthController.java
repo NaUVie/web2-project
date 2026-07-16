@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 public class AuthController {
@@ -28,6 +29,9 @@ public class AuthController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
     private static final Map<String, String> resetTokens = new ConcurrentHashMap<>();
 
@@ -45,13 +49,63 @@ public class AuthController {
 
         String role = user.getRole() != null ? user.getRole().getRoleName() : "ROLE_USER";
         String token = jwtTokenUtil.generateToken(user.getUserName(), role, user.getId());
+        String refreshToken = UUID.randomUUID().toString();
+
+        // Store refresh token in Redis for 7 days
+        redisTemplate.opsForValue().set("refresh_token:" + refreshToken, String.valueOf(user.getId()), 7, TimeUnit.DAYS);
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
+        response.put("refreshToken", refreshToken);
         response.put("username", user.getUserName());
         response.put("role", role);
         response.put("userId", user.getId());
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> payload) {
+        String refreshToken = payload.get("refreshToken");
+        if (refreshToken == null) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Thiếu Refresh Token");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        String userIdStr = redisTemplate.opsForValue().get("refresh_token:" + refreshToken);
+        if (userIdStr == null) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Refresh Token không hợp lệ hoặc đã hết hạn");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        }
+
+        Long userId = Long.parseLong(userIdStr);
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Người dùng không tồn tại");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        }
+
+        String role = user.getRole() != null ? user.getRole().getRoleName() : "ROLE_USER";
+        String newAccessToken = jwtTokenUtil.generateToken(user.getUserName(), role, user.getId());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", newAccessToken);
+        response.put("refreshToken", refreshToken);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> payload) {
+        String refreshToken = payload.get("refreshToken");
+        if (refreshToken != null) {
+            redisTemplate.delete("refresh_token:" + refreshToken);
+        }
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Đăng xuất thành công");
         return ResponseEntity.ok(response);
     }
 

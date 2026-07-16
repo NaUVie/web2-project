@@ -245,11 +245,23 @@ export default function ProductDetail({ onAddToCart }) {
                     style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}
                   />
                 </Link>
-                <div style={{ textAlign: 'left', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                 <div style={{ textAlign: 'left', flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <Link to={`/product/${p.id}`} style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
                     {p.productName}
                   </Link>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>{p.category}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{p.category}</div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    {p.availability > 0 ? (
+                      <span style={{ fontSize: '0.75rem', color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.12)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 600 }}>
+                        Còn {p.availability} sp
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.12)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 600 }}>
+                        Hết hàng
+                      </span>
+                    )}
+                  </div>
                   
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: 'auto', marginBottom: '1rem' }}>
                     {p.promoPrice ? (
@@ -263,11 +275,12 @@ export default function ProductDetail({ onAddToCart }) {
                   </div>
 
                   <button 
+                    disabled={p.availability <= 0}
                     onClick={() => onAddToCart(p)}
                     className="btn btn-primary"
-                    style={{ width: '100%', gap: '0.5rem' }}
+                    style={{ width: '100%', gap: '0.5rem', opacity: p.availability <= 0 ? 0.6 : 1, cursor: p.availability <= 0 ? 'not-allowed' : 'pointer' }}
                   >
-                    <ShoppingCart size={16} /> Thêm Vào Giỏ
+                    <ShoppingCart size={16} /> {p.availability > 0 ? 'Thêm Vào Giỏ' : 'Hết Hàng'}
                   </button>
                 </div>
               </div>

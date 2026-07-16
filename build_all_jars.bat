@@ -6,7 +6,7 @@ echo           Building All Microservices JARs (Java 21)
 echo ==========================================================
 echo.
 
-set SERVICES=eureka-server user-service product-catalog-service product-recommendation-service order-service chatbot-service api-gateway
+set SERVICES=eureka-server user-service product-catalog-service product-recommendation-service order-service chatbot-service payment-service api-gateway
 
 for %%s in (%SERVICES%) do (
     echo [%%s] Building package...

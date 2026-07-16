@@ -49,6 +49,12 @@ spring:
             - Path=/api/chatbot/**
           filters:
             - StripPrefix=2
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payment/**
+          filters:
+            - StripPrefix=2
 
 eureka:
   client:
@@ -65,3 +71,21 @@ management:
   endpoint:
     health:
       show-details: always
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    urls:
+      - name: User Service (Accounts)
+        url: /api/accounts/v3/api-docs
+      - name: Catalog Service
+        url: /api/catalog/v3/api-docs
+      - name: Order Service (Shop)
+        url: /api/shop/v3/api-docs
+      - name: Recommendation Service (Review)
+        url: /api/review/v3/api-docs
+      - name: Payment Service
+        url: /api/payment/v3/api-docs

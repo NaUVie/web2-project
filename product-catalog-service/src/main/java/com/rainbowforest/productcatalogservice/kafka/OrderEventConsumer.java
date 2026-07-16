@@ -28,9 +28,9 @@ public class OrderEventConsumer {
         try {
             OrderEvent event = objectMapper.readValue(message, OrderEvent.class);
             
-            // Only process stock deduction if the order status is updated to COMPLETED
-            if ("COMPLETED".equalsIgnoreCase(event.getStatus())) {
-                System.out.println("======> CATALOG SERVICE [Kafka]: Received COMPLETED Order Event. Deducting stock for Order ID: " + event.getOrderId());
+            // Only process stock deduction if the order status is updated to COMPLETED or DELIVERED
+            if ("COMPLETED".equalsIgnoreCase(event.getStatus()) || "DELIVERED".equalsIgnoreCase(event.getStatus())) {
+                System.out.println("======> CATALOG SERVICE [Kafka]: Received COMPLETED/DELIVERED Order Event. Deducting stock for Order ID: " + event.getOrderId());
                 
                 for (OrderEvent.OrderItemInfo item : event.getItems()) {
                     Product product = productRepository.findById(item.getProductId()).orElse(null);

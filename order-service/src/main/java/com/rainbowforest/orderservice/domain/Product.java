@@ -15,7 +15,7 @@ public class Product {
     @JsonIgnore
     private Long productId;
 
-    @Transient
+    @Column(name = "catalog_id")
     private Long id;
 
     @Column (name = "product_name")
@@ -27,6 +27,9 @@ public class Product {
 
     @Column (name = "image_url", length = 500)
     private String imageUrl;
+
+    @Column (name = "promo_price")
+    private BigDecimal promoPrice;
 
     @OneToMany (mappedBy = "product", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -70,5 +73,13 @@ public class Product {
 
     public void setItems(List<Item> items) {
         this.items = items;
+    }
+
+    public BigDecimal getPromoPrice() {
+        return promoPrice;
+    }
+
+    public void setPromoPrice(BigDecimal promoPrice) {
+        this.promoPrice = promoPrice;
     }
 }

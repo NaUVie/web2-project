@@ -96,10 +96,24 @@ function AppContent({
 
 function App() {
   const [theme, setTheme] = useState(localStorage.getItem('nexus_theme') || 'dark');
-  const [user, setUser] = useState(null);
-  const [cart, setCart] = useState([]);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('nexus_user');
+    try {
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('nexus_cart');
+    try {
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
-  // Initialize theme and user session
+  // Initialize theme
   useEffect(() => {
     // Theme setup
     if (theme === 'dark') {
@@ -109,20 +123,6 @@ function App() {
     }
     localStorage.setItem('nexus_theme', theme);
   }, [theme]);
-
-  useEffect(() => {
-    // Session setup
-    const savedUser = localStorage.getItem('nexus_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-
-    // Cart setup
-    const savedCart = localStorage.getItem('nexus_cart');
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
-  }, []);
 
   // Cart operations
   const handleAddToCart = (product, quantity = 1) => {

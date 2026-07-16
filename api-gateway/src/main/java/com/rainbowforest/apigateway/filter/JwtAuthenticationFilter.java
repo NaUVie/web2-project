@@ -29,10 +29,15 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         // 1. Bypass public paths
         if (path.equals("/api/accounts/login") || 
             path.equals("/api/accounts/registration") ||
+            path.equals("/api/accounts/refresh-token") ||
+            path.equals("/api/accounts/logout") ||
             path.equals("/api/accounts/users/check-username") ||
             path.equals("/api/accounts/users/check-email") ||
-            path.equals("/api/shop/orders/payment-confirm") ||
+            path.equals("/api/payment/orders/payment-confirm") ||
             path.startsWith("/api/chatbot") ||
+            path.contains("/v3/api-docs") ||
+            path.contains("/swagger-ui") ||
+            path.contains("/webjars") ||
             (path.startsWith("/api/catalog") && method.equalsIgnoreCase("GET")) ||
             (path.startsWith("/api/review") && method.equalsIgnoreCase("GET"))) {
             return chain.filter(exchange);

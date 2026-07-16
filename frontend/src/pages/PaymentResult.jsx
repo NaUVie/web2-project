@@ -28,22 +28,16 @@ export default function PaymentResult({ onClearCart }) {
           transactionNo
         });
 
-        if (responseCode === '00') {
-          // Call backend to confirm payment and update status
-          const res = await api.confirmPayment(location.search);
-          if (res.status === 'SUCCESS') {
-            setStatus('SUCCESS');
-            setMessage('Thanh toán đơn hàng thành công qua cổng VNPAY!');
-            if (onClearCart) {
-              onClearCart();
-            }
-          } else {
-            setStatus('FAILED');
-            setMessage(res.message || 'Thanh toán không thành công.');
+        const res = await api.confirmPayment(location.search);
+        if (responseCode === '00' && res.status === 'SUCCESS') {
+          setStatus('SUCCESS');
+          setMessage('Thanh toán đơn hàng thành công qua cổng VNPAY!');
+          if (onClearCart) {
+            onClearCart();
           }
         } else {
           setStatus('FAILED');
-          setMessage(`Giao dịch bị hủy hoặc thất bại (Mã lỗi VNPAY: ${responseCode})`);
+          setMessage(res.message || `Giao dịch bị hủy hoặc thất bại (Mã lỗi VNPAY: ${responseCode})`);
         }
       } catch (err) {
         console.error('Lỗi khi xác thực thanh toán:', err);

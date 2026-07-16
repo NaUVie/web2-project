@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, FolderTree, FileText, Image, Users, ShoppingCart, Plus, Edit, Trash2, Check, X, RefreshCw } from 'lucide-react';
+import { Package, FolderTree, FileText, Image, Users, ShoppingCart, Plus, Edit, Trash2, Check, X, RefreshCw, Eye } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function AdminDashboard({ user, openAuthModal }) {
@@ -33,6 +33,7 @@ export default function AdminDashboard({ user, openAuthModal }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [orderPage, setOrderPage] = useState(1);
 
   const handleFileUpload = async (e, formType, fieldName) => {
     const file = e.target.files[0];
@@ -218,8 +219,14 @@ export default function AdminDashboard({ user, openAuthModal }) {
     }
   };
 
-  const handleUpdateOrderStatus = async (orderId, newStatus) => {
-    await api.updateOrderStatus(orderId, newStatus).then(triggerRefresh).catch(e => alert(e.message));
+  const handleUpdateOrderStatus = async (orderId, newStatus, newPaymentStatus) => {
+    await api.updateOrderStatus(orderId, newStatus, newPaymentStatus).then(triggerRefresh).catch(e => alert(e.message));
+  };
+
+  const openViewOrderModal = (order) => {
+    setModalType('view-order');
+    setSelectedEntity(order);
+    setShowModal(true);
   };
 
   const openCreateModal = (type) => {
@@ -281,7 +288,7 @@ export default function AdminDashboard({ user, openAuthModal }) {
             <button onClick={() => setActiveTab('users')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeTab === 'users' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'users' ? 'white' : 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
               <Users size={18} /> Tài khoản khách
             </button>
-            <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeTab === 'orders' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'orders' ? 'white' : 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+            <button onClick={() => { setActiveTab('orders'); setOrderPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeTab === 'orders' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'orders' ? 'white' : 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
               <ShoppingCart size={18} /> Đơn hàng
             </button>
           </div>
@@ -572,63 +579,148 @@ export default function AdminDashboard({ user, openAuthModal }) {
               )}
 
               {/* Tab 7: Orders Manager */}
-              {activeTab === 'orders' && (
-                <div>
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Quản Lý Đơn Hàng ({orders.length})</h3>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {orders.map(ord => (
-                      <div key={ord.id} style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', backgroundColor: 'var(--bg-secondary)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
-                          <div>
-                            <strong>Đơn hàng #{ord.id}</strong>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '1rem' }}>Ngày đặt: {ord.orderedDate}</span>
-                          </div>
-                          
-                          {/* Order Status selector */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Trạng thái:</span>
-                            <select 
-                              value={ord.status} 
-                              onChange={(e) => handleUpdateOrderStatus(ord.id, e.target.value)}
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none' }}
-                            >
-                              <option value="PENDING">PENDING</option>
-                              <option value="CONFIRMED">CONFIRMED</option>
-                              <option value="SHIPPED">SHIPPED</option>
-                              <option value="DELIVERED">DELIVERED</option>
-                              <option value="CANCELLED">CANCELLED</option>
-                            </select>
-                          </div>
-                        </div>
+              {activeTab === 'orders' && (() => {
+                const ordersPerPage = 5;
+                const totalPages = Math.ceil(orders.length / ordersPerPage);
+                const indexOfLastOrder = orderPage * ordersPerPage;
+                const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+                const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
 
-                        {/* Order info details */}
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '0.75rem' }}>
-                          <div>
-                            <div>Họ tên khách: <strong>{ord.fullName || ord.user?.userName}</strong></div>
-                            <div>Số điện thoại: <strong>{ord.phoneNumber || '-'}</strong></div>
-                            <div>Phương thức: <strong>{ord.paymentMethod || 'COD'}</strong></div>
-                          </div>
-                          <div>
-                            <div>Địa chỉ giao: <strong>{ord.shippingAddress || 'Chưa cập nhật'}</strong></div>
-                            <div style={{ color: 'var(--accent-primary)', fontSize: '0.95rem', fontWeight: 700, marginTop: '0.25rem' }}>Tổng thanh toán: {parseFloat(ord.total).toLocaleString('vi-VN')} đ</div>
-                          </div>
-                        </div>
-
-                        {/* Items listed */}
-                        <div style={{ backgroundColor: 'var(--bg-tertiary)', borderRadius: '8px', padding: '0.5rem 1rem' }}>
-                          {ord.items && ord.items.map(it => (
-                            <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                              <span>{it.product?.productName} <strong>x{it.quantity}</strong></span>
-                              <strong>{(it.product ? parseFloat(it.product.price) * it.quantity : 0).toLocaleString('vi-VN')} đ</strong>
+                return (
+                  <div>
+                    <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Quản Lý Đơn Hàng ({orders.length})</h3>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      {currentOrders.map(ord => (
+                        <div key={ord.id} style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', backgroundColor: 'var(--bg-secondary)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                              <strong>Đơn hàng #{ord.id}</strong>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ngày đặt: {ord.orderedDate}</span>
+                              <button 
+                                onClick={() => openViewOrderModal(ord)} 
+                                className="btn btn-secondary" 
+                                style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                              >
+                                <Eye size={12} /> Xem chi tiết
+                              </button>
                             </div>
-                          ))}
+                            
+                            {/* Order & Payment Status selectors */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Đơn hàng:</span>
+                                <select 
+                                  value={ord.status} 
+                                  onChange={(e) => handleUpdateOrderStatus(ord.id, e.target.value, ord.paymentStatus)}
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none' }}
+                                >
+                                  <option value="PENDING">Chờ xử lý</option>
+                                  <option value="CONFIRMED">Đã nhận</option>
+                                  <option value="SHIPPED">Đang vận chuyển</option>
+                                  <option value="DELIVERED">Đã giao</option>
+                                  <option value="CANCELLED">Đã hủy</option>
+                                </select>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Thanh toán:</span>
+                                <span style={{ 
+                                  padding: '0.25rem 0.5rem', 
+                                  fontSize: '0.8rem', 
+                                  borderRadius: '6px', 
+                                  border: '1px solid var(--border-color)', 
+                                  backgroundColor: 'var(--bg-primary)', 
+                                  color: 'var(--text-primary)',
+                                  fontWeight: 700
+                                }}>
+                                  {ord.paymentMethod === 'BANK' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Order info details */}
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '0.75rem' }}>
+                            <div>
+                              <div>Họ tên khách: <strong>{ord.fullName || ord.user?.userName}</strong></div>
+                              <div>Số điện thoại: <strong>{ord.phoneNumber || '-'}</strong></div>
+                              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                <span>Trạng thái: </span>
+                                <span style={{ 
+                                  padding: '0.15rem 0.4rem',
+                                  borderRadius: '4px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  backgroundColor: ord.paymentStatus === 'PAID' ? 'rgba(16, 185, 129, 0.15)' : 
+                                                   ord.paymentStatus === 'FAILED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                  color: ord.paymentStatus === 'PAID' ? '#34d399' : 
+                                         ord.paymentStatus === 'FAILED' ? '#f87171' : '#fbbf24'
+                                }}>
+                                  {ord.paymentStatus === 'PAID' ? 'Đã thanh toán' :
+                                   ord.paymentStatus === 'FAILED' ? 'Thất bại' : 'Chờ thanh toán'}
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <div>Địa chỉ giao: <strong>{ord.shippingAddress || 'Chưa cập nhật'}</strong></div>
+                              <div style={{ color: 'var(--accent-primary)', fontSize: '0.95rem', fontWeight: 700, marginTop: '0.25rem' }}>Tổng thanh toán: {parseFloat(ord.total).toLocaleString('vi-VN')} đ</div>
+                            </div>
+                          </div>
+
+                          {/* Items listed */}
+                          <div style={{ backgroundColor: 'var(--bg-tertiary)', borderRadius: '8px', padding: '0.5rem 1rem' }}>
+                            {ord.items && ord.items.map(it => (
+                              <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                                <span>{it.product?.productName} <strong>x{it.quantity}</strong></span>
+                                <strong>{(it.product ? parseFloat(it.product.price) * it.quantity : 0).toLocaleString('vi-VN')} đ</strong>
+                              </div>
+                            ))}
+                          </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '2rem' }}>
+                        <button 
+                          disabled={orderPage === 1}
+                          onClick={() => setOrderPage(prev => Math.max(prev - 1, 1))}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem 0.8rem', height: 'auto', fontSize: '0.85rem' }}
+                        >
+                          Trước
+                        </button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                          <button
+                            key={p}
+                            onClick={() => setOrderPage(p)}
+                            className={`btn ${orderPage === p ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ 
+                              padding: '0.4rem 0.8rem', 
+                              height: 'auto', 
+                              fontSize: '0.85rem',
+                              minWidth: '32px'
+                            }}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                        
+                        <button 
+                          disabled={orderPage === totalPages}
+                          onClick={() => setOrderPage(prev => Math.min(prev + 1, totalPages))}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem 0.8rem', height: 'auto', fontSize: '0.85rem' }}
+                        >
+                          Sau
+                        </button>
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </>
           )}
 
@@ -638,12 +730,13 @@ export default function AdminDashboard({ user, openAuthModal }) {
       {/* CRUD Pop-up Modals */}
       {showModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyOrigin: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '520px', padding: '2rem', borderRadius: '16px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: modalType === 'view-order' ? '680px' : '520px', padding: '2rem', borderRadius: '16px', maxHeight: '90vh', overflowY: 'auto' }}>
             
             {/* Modal header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>
-                {modalType.startsWith('create') ? 'Thêm mới' : 'Chỉnh sửa'} {
+                {modalType === 'view-order' ? 'Chi Tiết Đơn Hàng' : modalType.startsWith('create') ? 'Thêm mới' : 'Chỉnh sửa'} {
+                  modalType === 'view-order' ? '' :
                   modalType.endsWith('prod') ? 'Sản phẩm' :
                   modalType.endsWith('cat') ? 'Danh mục' :
                   modalType.endsWith('bcat') ? 'Danh mục tin' :
@@ -652,6 +745,105 @@ export default function AdminDashboard({ user, openAuthModal }) {
               </h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' }}>✕</button>
             </div>
+
+            {/* View Order Details */}
+            {modalType === 'view-order' && selectedEntity && (() => {
+              const ord = selectedEntity;
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {/* General Info */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
+                    <div>
+                      <div style={{ marginBottom: '0.5rem' }}>Mã đơn hàng: <strong style={{ color: 'var(--accent-primary)' }}>#{ord.id}</strong></div>
+                      <div style={{ marginBottom: '0.5rem' }}>Ngày đặt: <strong>{ord.orderedDate || '-'}</strong></div>
+                      <div style={{ marginBottom: '0.5rem' }}>Trạng thái đơn: 
+                        <span style={{ 
+                          marginLeft: '0.5rem',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          backgroundColor: ord.status === 'DELIVERED' ? 'rgba(16, 185, 129, 0.15)' : 
+                                           ord.status === 'CANCELLED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                          color: ord.status === 'DELIVERED' ? '#34d399' : 
+                                 ord.status === 'CANCELLED' ? '#f87171' : '#fbbf24'
+                        }}>
+                          {ord.status === 'PENDING' ? 'Chờ xử lý' :
+                           ord.status === 'CONFIRMED' ? 'Đã nhận' :
+                           ord.status === 'SHIPPED' ? 'Đang vận chuyển' :
+                           ord.status === 'DELIVERED' ? 'Đã giao' : 'Đã hủy'}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ marginBottom: '0.5rem' }}>Thanh toán: 
+                        <span style={{ 
+                          marginLeft: '0.5rem',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          backgroundColor: ord.paymentStatus === 'PAID' ? 'rgba(16, 185, 129, 0.15)' : 
+                                           ord.paymentStatus === 'FAILED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                          color: ord.paymentStatus === 'PAID' ? '#34d399' : 
+                                 ord.paymentStatus === 'FAILED' ? '#f87171' : '#fbbf24'
+                        }}>
+                          {ord.paymentStatus === 'PAID' ? 'Đã thanh toán' :
+                           ord.paymentStatus === 'FAILED' ? 'Thất bại' : 'Chờ thanh toán'}
+                        </span>
+                      </div>
+                      <div style={{ marginBottom: '0.5rem' }}>Phương thức: <strong>{ord.paymentMethod === 'BANK' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng'}</strong></div>
+                    </div>
+                  </div>
+
+                  {/* Customer Info */}
+                  <div style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.6rem', color: 'var(--accent-primary)' }}>Thông Tin Khách Hàng</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.85rem' }}>
+                      <div>Họ tên: <strong>{ord.fullName || ord.user?.userName || '-'}</strong></div>
+                      <div>Số điện thoại: <strong>{ord.phoneNumber || '-'}</strong></div>
+                      <div style={{ gridColumn: 'span 2' }}>Địa chỉ giao hàng: <strong>{ord.shippingAddress || 'Chưa cập nhật'}</strong></div>
+                    </div>
+                  </div>
+
+                  {/* Items List */}
+                  <div>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.6rem', color: 'var(--accent-primary)' }}>Danh Sách Sản Phẩm</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {ord.items && ord.items.map(it => (
+                        <div key={it.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {it.product?.imageUrl ? (
+                              <img src={it.product.imageUrl} alt={it.product.productName} style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '6px' }} />
+                            ) : (
+                              <div style={{ width: '45px', height: '45px', backgroundColor: 'var(--border-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem' }}>No image</div>
+                            )}
+                            <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{it.product?.productName}</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Đơn giá: {parseFloat(it.product?.price || 0).toLocaleString('vi-VN')} đ</span>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', fontSize: '0.85rem' }}>
+                            <div>Số lượng: <strong>x{it.quantity}</strong></div>
+                            <strong style={{ color: 'var(--accent-primary)' }}>{(it.product ? parseFloat(it.product.price) * it.quantity : 0).toLocaleString('vi-VN')} đ</strong>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Total summary */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '1rem', borderTop: '2px solid var(--border-color)' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 700 }}>Tổng cộng:</span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-primary)' }}>{parseFloat(ord.total).toLocaleString('vi-VN')} đ</span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                    <button onClick={() => setShowModal(false)} className="btn btn-secondary" style={{ padding: '0.5rem 1.5rem' }}>Đóng</button>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Form for Product */}
             {modalType.includes('prod') && (

@@ -24,6 +24,7 @@ export default function Profile({ user }) {
   const [activeTab, setActiveTab] = useState('info'); // 'info', 'password', 'orders'
   const [infoMsg, setInfoMsg] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Load user data
   useEffect(() => {
@@ -121,6 +122,7 @@ export default function Profile({ user }) {
   const getStatusColor = (status) => {
     switch (status?.toUpperCase()) {
       case 'PENDING': return { bg: 'rgba(245, 158, 11, 0.15)', text: '#f59e0b' };
+      case 'PAID': return { bg: 'rgba(16, 185, 129, 0.15)', text: '#10b981' };
       case 'CONFIRMED': return { bg: 'rgba(59, 130, 246, 0.15)', text: '#3b82f6' };
       case 'SHIPPED': return { bg: 'rgba(139, 92, 246, 0.15)', text: '#8b5cf6' };
       case 'DELIVERED': return { bg: 'rgba(16, 185, 129, 0.15)', text: '#10b981' };
@@ -207,7 +209,7 @@ export default function Profile({ user }) {
             </button>
 
             <button 
-              onClick={() => { setActiveTab('orders'); setInfoMsg({ type: '', text: '' }); }}
+              onClick={() => { setActiveTab('orders'); setInfoMsg({ type: '', text: '' }); setCurrentPage(1); }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -333,128 +335,195 @@ export default function Profile({ user }) {
           )}
 
           {/* Tab 3: Order History Panel */}
-          {activeTab === 'orders' && (
-            <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                Lịch Sử Đơn Hàng ({orders.length})
-              </h3>
+          {activeTab === 'orders' && (() => {
+            const ordersPerPage = 5;
+            const totalPages = Math.ceil(orders.length / ordersPerPage);
+            const indexOfLastOrder = currentPage * ordersPerPage;
+            const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+            const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
 
-              {orders.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
-                  Bạn chưa đặt đơn hàng nào tại Nexus Shop.
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {orders.map(order => {
-                    const statusColor = getStatusColor(order.status);
-                    return (
-                      <div 
-                        key={order.id}
-                        style={{
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '12px',
-                          padding: '1.25rem',
-                          backgroundColor: 'var(--bg-secondary)'
-                        }}
-                      >
-                        {/* Order info header */}
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid var(--border-color)',
-                          paddingBottom: '0.75rem',
-                          marginBottom: '0.75rem',
-                          flexWrap: 'wrap',
-                          gap: '0.5rem'
-                        }}>
-                          <div>
-                            <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>Đơn hàng #{order.id}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '1rem' }}>
-                              Ngày đặt: {order.orderedDate}
-                            </span>
-                          </div>
-                          
-                          <span 
-                            className="badge" 
+            return (
+              <div>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                  Lịch Sử Đơn Hàng ({orders.length})
+                </h3>
+
+                {orders.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+                    Bạn chưa đặt đơn hàng nào tại Nexus Shop.
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      {currentOrders.map(order => {
+                        const statusColor = getStatusColor(order.status);
+                        return (
+                          <div 
+                            key={order.id}
                             style={{
-                              backgroundColor: statusColor.bg,
-                              color: statusColor.text,
-                              fontWeight: 700
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '12px',
+                              padding: '1.25rem',
+                              backgroundColor: 'var(--bg-secondary)'
                             }}
                           >
-                            {order.status}
-                          </span>
-                        </div>
-
-                        {/* Order items list */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                          {order.items && order.items.map(item => (
-                            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                              <span style={{ color: 'var(--text-secondary)' }}>
-                                {item.product ? item.product.productName : 'Sản phẩm'} <strong style={{ color: 'var(--text-primary)' }}>x{item.quantity}</strong>
+                            {/* Order info header */}
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              borderBottom: '1px solid var(--border-color)',
+                              paddingBottom: '0.75rem',
+                              marginBottom: '0.75rem',
+                              flexWrap: 'wrap',
+                              gap: '0.5rem'
+                            }}>
+                              <div>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>Đơn hàng #{order.id}</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '1rem' }}>
+                                  Ngày đặt: {order.orderedDate}
+                                </span>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                                  Phương thức: <strong>{order.paymentMethod === 'BANK' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng'}</strong>
+                                  {order.paymentMethod === 'BANK' && (
+                                    <>
+                                      {' | Thanh toán: '}
+                                      <span style={{ 
+                                        fontWeight: 700, 
+                                        color: order.paymentStatus === 'PAID' ? '#10b981' : order.paymentStatus === 'FAILED' ? '#ef4444' : '#f59e0b' 
+                                      }}>
+                                        {order.paymentStatus === 'PAID' ? 'Đã thanh toán' : order.paymentStatus === 'FAILED' ? 'Thất bại' : 'Chờ thanh toán'}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <span 
+                                className="badge" 
+                                style={{
+                                  backgroundColor: statusColor.bg,
+                                  color: statusColor.text,
+                                  fontWeight: 700
+                                }}
+                              >
+                                {order.status === 'PENDING' ? 'Chờ xử lý' :
+                                 order.status === 'CONFIRMED' ? 'Đã nhận' :
+                                 order.status === 'SHIPPED' ? 'Đang vận chuyển' :
+                                 order.status === 'DELIVERED' ? 'Đã giao' :
+                                 order.status === 'CANCELLED' ? 'Đã hủy' : order.status}
                               </span>
-                              <strong style={{ color: 'var(--text-primary)' }}>
-                                {(item.product ? parseFloat(item.product.price) * item.quantity : 0).toLocaleString('vi-VN')} đ
-                              </strong>
                             </div>
-                          ))}
-                        </div>
 
-                        {/* Order Delivery & Total footer */}
-                        <div style={{
-                          borderTop: '1px solid var(--border-color)',
-                          paddingTop: '0.75rem',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          fontSize: '0.85rem',
-                          color: 'var(--text-secondary)',
-                          flexWrap: 'wrap',
-                          gap: '0.5rem'
-                        }}>
-                          <div>
-                            🚚 Địa chỉ giao: <strong>{order.shippingAddress || 'Chưa cung cấp'}</strong>
-                          </div>
-                          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
-                            Tổng tiền: {parseFloat(order.total || 0).toLocaleString('vi-VN')} đ
-                          </div>
-                        </div>
+                            {/* Order items list */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                              {order.items && order.items.map(item => (
+                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                  <span style={{ color: 'var(--text-secondary)' }}>
+                                    {item.product ? item.product.productName : 'Sản phẩm'} <strong style={{ color: 'var(--text-primary)' }}>x{item.quantity}</strong>
+                                  </span>
+                                  <strong style={{ color: 'var(--text-primary)' }}>
+                                    {(item.product ? parseFloat(item.product.price) * item.quantity : 0).toLocaleString('vi-VN')} đ
+                                  </strong>
+                                </div>
+                              ))}
+                            </div>
 
-                        {order.status?.toUpperCase() === 'PENDING' && order.paymentMethod?.toUpperCase() === 'BANK' && (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', borderTop: '1px dashed var(--border-color)', paddingTop: '0.75rem' }}>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  setInfoMsg({ type: '', text: '' });
-                                  const response = await api.getOrderPaymentUrl(order.id);
-                                  if (response.paymentUrl) {
-                                    window.location.href = response.paymentUrl;
-                                  }
-                                } catch (err) {
-                                  setInfoMsg({ type: 'error', text: err.message || 'Lỗi khi tạo link thanh toán' });
-                                }
-                              }}
-                              className="btn btn-primary"
-                              style={{
-                                padding: '0.5rem 1rem',
-                                fontSize: '0.85rem',
-                                height: 'auto',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              💳 Thanh toán lại qua VNPay
-                            </button>
-                          </div>
-                        )}
+                            {/* Order Delivery & Total footer */}
+                            <div style={{
+                              borderTop: '1px solid var(--border-color)',
+                              paddingTop: '0.75rem',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              fontSize: '0.85rem',
+                              color: 'var(--text-secondary)',
+                              flexWrap: 'wrap',
+                              gap: '0.5rem'
+                            }}>
+                              <div>
+                                🚚 Địa chỉ giao: <strong>{order.shippingAddress || 'Chưa cung cấp'}</strong>
+                              </div>
+                              <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
+                                Tổng tiền: {parseFloat(order.total || 0).toLocaleString('vi-VN')} đ
+                              </div>
+                            </div>
 
+                            {order.status?.toUpperCase() === 'PENDING' && order.paymentMethod?.toUpperCase() === 'BANK' && (
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', borderTop: '1px dashed var(--border-color)', paddingTop: '0.75rem' }}>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      setInfoMsg({ type: '', text: '' });
+                                      const response = await api.getOrderPaymentUrl(order.id);
+                                      if (response.paymentUrl) {
+                                        window.location.href = response.paymentUrl;
+                                      }
+                                    } catch (err) {
+                                      setInfoMsg({ type: 'error', text: err.message || 'Lỗi khi tạo link thanh toán' });
+                                    }
+                                  }}
+                                  className="btn btn-primary"
+                                  style={{
+                                    padding: '0.5rem 1rem',
+                                    fontSize: '0.85rem',
+                                    height: 'auto',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  💳 Thanh toán lại qua VNPay
+                                </button>
+                              </div>
+                            )}
+
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '2rem' }}>
+                        <button 
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem 0.8rem', height: 'auto', fontSize: '0.85rem' }}
+                        >
+                          Trước
+                        </button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                          <button
+                            key={p}
+                            onClick={() => setCurrentPage(p)}
+                            className={`btn ${currentPage === p ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ 
+                              padding: '0.4rem 0.8rem', 
+                              height: 'auto', 
+                              fontSize: '0.85rem',
+                              minWidth: '32px'
+                            }}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                        
+                        <button 
+                          disabled={currentPage === totalPages}
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem 0.8rem', height: 'auto', fontSize: '0.85rem' }}
+                        >
+                          Sau
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
         </div>
 

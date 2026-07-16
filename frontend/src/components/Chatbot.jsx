@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Trash2, Key, Bot } from 'lucide-react';
+import { MessageSquare, X, Send, Trash2, Bot } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function Chatbot({ onAddToCart, onBuyNow }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '');
-  const [showKeyInput, setShowKeyInput] = useState(false);
   const [allProducts, setAllProducts] = useState([]);
   const chatEndRef = useRef(null);
 
@@ -55,12 +53,7 @@ export default function Chatbot({ onAddToCart, onBuyNow }) {
     localStorage.removeItem('nexus_chat_history');
   };
 
-  const handleSaveKey = (e) => {
-    e.preventDefault();
-    localStorage.setItem('gemini_api_key', apiKey);
-    setShowKeyInput(false);
-    alert('Đã lưu API Key thành công!');
-  };
+
 
   // Find matching products by text keyword
   const findMatchingProducts = (text) => {
@@ -145,7 +138,7 @@ export default function Chatbot({ onAddToCart, onBuyNow }) {
     let matchedProducts = [];
 
     try {
-      const response = await api.sendChatMessage(userText, apiKey);
+      const response = await api.sendChatMessage(userText);
       botReplyText = response.reply;
       matchedProducts = findMatchingProducts(userText);
     } catch (err) {
@@ -217,13 +210,6 @@ export default function Chatbot({ onAddToCart, onBuyNow }) {
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <button 
-                onClick={() => setShowKeyInput(!showKeyInput)}
-                title="Cấu hình API Key Gemini"
-                style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
-              >
-                <Key size={18} />
-              </button>
-              <button 
                 onClick={handleClearHistory}
                 title="Xóa lịch sử chat"
                 style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
@@ -239,35 +225,7 @@ export default function Chatbot({ onAddToCart, onBuyNow }) {
             </div>
           </div>
 
-          {/* API Key Input Overlay */}
-          {showKeyInput && (
-            <div style={{
-              padding: '1rem',
-              backgroundColor: 'var(--bg-tertiary)',
-              borderBottom: '1px solid var(--border-color)',
-              textAlign: 'left'
-            }}>
-              <form onSubmit={handleSaveKey}>
-                <label className="form-label" style={{ fontSize: '0.75rem' }}>Nhập Google Gemini API Key:</label>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                  <input 
-                    type="password" 
-                    placeholder="AIzaSy..." 
-                    className="form-input" 
-                    value={apiKey} 
-                    onChange={(e) => setApiKey(e.target.value)}
-                    style={{ height: '32px', fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
-                  />
-                  <button type="submit" className="btn btn-primary" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', height: '32px' }}>
-                    Lưu
-                  </button>
-                </div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                  Để trống để sử dụng trợ lý Fallback (không cần API Key).
-                </div>
-              </form>
-            </div>
-          )}
+
 
           {/* Messages Area */}
           <div style={{

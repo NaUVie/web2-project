@@ -376,7 +376,7 @@ export const api = {
   },
 
   confirmPayment: async (searchParamsString) => {
-    const res = await fetch(`${API_BASE}/shop/orders/payment-confirm${searchParamsString}`);
+    const res = await fetch(`${API_BASE}/payment/orders/payment-confirm${searchParamsString}`);
     if (!res.ok) {
       const errText = await res.text();
       throw new Error(errText || 'Xác thực thanh toán thất bại');
@@ -385,7 +385,7 @@ export const api = {
   },
 
   getOrderPaymentUrl: async (orderId) => {
-    const res = await fetch(`${API_BASE}/shop/orders/${orderId}/payment-url`, {
+    const res = await fetch(`${API_BASE}/payment/orders/${orderId}/payment-url`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) {
@@ -411,22 +411,22 @@ export const api = {
     return res.json();
   },
 
-  updateOrderStatus: async (orderId, status) => {
+  updateOrderStatus: async (orderId, status, paymentStatus) => {
     const res = await fetch(`${API_BASE}/shop/orders/${orderId}/status`, {
       method: 'PUT',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status, paymentStatus })
     });
     if (!res.ok) throw new Error('Cập nhật trạng thái đơn hàng thất bại');
     return res.json();
   },
 
   // Chatbot (Chatbot Service)
-  sendChatMessage: async (message, apiKey) => {
+  sendChatMessage: async (message) => {
     const res = await fetch(`${API_BASE}/chatbot/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, apiKey })
+      body: JSON.stringify({ message })
     });
     if (!res.ok) throw new Error('Không thể kết nối với chatbot');
     return res.json();

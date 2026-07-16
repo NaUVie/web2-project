@@ -63,5 +63,55 @@ public class UserDatabaseSeeder implements CommandLineRunner {
             userRepository.save(adminUser);
             System.out.println("======> Seeded admin_user with password123 successfully!");
         }
+
+        // Seed admin (123456)
+        User admin = userRepository.findByUserName("admin");
+        if (admin == null) {
+            admin = new User();
+            admin.setUserName("admin");
+            admin.setUserPassword(passwordEncoder.encode("123456"));
+            admin.setActive(1);
+            admin.setRole(adminRole);
+
+            UserDetails details = new UserDetails();
+            details.setFirstName("Admin");
+            details.setLastName("Nexus");
+            details.setEmail("admin@nexus.com");
+            details.setPhoneNumber("0123456780");
+            details.setStreet("Nexus Street");
+            details.setStreetNumber("10");
+            details.setZipCode("10000");
+            details.setLocality("Hanoi");
+            details.setCountry("Vietnam");
+            admin.setUserDetails(details);
+
+            userRepository.save(admin);
+            System.out.println("======> Seeded admin with 123456 successfully!");
+        }
+
+        // Seed lqutr (123456)
+        User lqutr = userRepository.findByUserName("lqutr");
+        if (lqutr == null) {
+            lqutr = new User();
+            lqutr.setUserName("lqutr");
+            lqutr.setUserPassword(passwordEncoder.encode("123456"));
+            lqutr.setActive(1);
+            lqutr.setRole(userRole);
+
+            UserDetails details = new UserDetails();
+            details.setFirstName("Trieu");
+            details.setLastName("La");
+            details.setEmail("lqutr@example.com");
+            details.setPhoneNumber("0987654321");
+            details.setStreet("User Street");
+            details.setStreetNumber("2");
+            details.setZipCode("10000");
+            details.setLocality("Hanoi");
+            details.setCountry("Vietnam");
+            lqutr.setUserDetails(details);
+
+            userRepository.save(lqutr);
+            System.out.println("======> Seeded lqutr with 123456 successfully!");
+        }
     }
 }
