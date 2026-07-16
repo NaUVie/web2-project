@@ -11,6 +11,8 @@ import com.rainbowforest.orderservice.service.OrderService;
 import com.rainbowforest.orderservice.utilities.OrderUtilities;
 import com.rainbowforest.orderservice.kafka.OrderEvent;
 import com.rainbowforest.orderservice.kafka.OrderEventProducer;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ import java.util.TimeZone;
 import java.util.Iterator;
 import jakarta.servlet.http.HttpServletRequest;
 
+@Slf4j
 @RestController
 public class OrderController {
 
@@ -80,12 +83,7 @@ public class OrderController {
             return new ResponseEntity<>("Thanh toán thất bại: Không tìm thấy sản phẩm được chọn trong giỏ hàng.", HttpStatus.BAD_REQUEST);
         }
 
-        User user = null;
-        try {
-            user = userClient.getUserById(userId);
-        } catch (Exception ex) {
-            // Xử lý khi user-service báo lỗi hoặc không tìm thấy user
-        }
+        User user = fetchUserWithCircuitBreaker(userId);
 
         if (user == null) {
             return new ResponseEntity<>("Thanh toán thất bại: Người dùng không tồn tại.", HttpStatus.NOT_FOUND);
@@ -137,19 +135,12 @@ public class OrderController {
                 );
                 orderEventProducer.sendOrderEvent(event);
             } catch (Exception kafkaEx) {
-                System.err.println("Failed to send Kafka event: " + kafkaEx.getMessage());
+                log.error("[Kafka] Failed to send order-created event for orderId={}: {}", order.getId(), kafkaEx.getMessage());
             }
 
             String paymentUrl = "";
             if ("BANK".equalsIgnoreCase(order.getPaymentMethod())) {
-                try {
-                    Map<String, String> paymentResponse = paymentClient.getPaymentUrl(order.getId());
-                    if (paymentResponse != null && paymentResponse.containsKey("paymentUrl")) {
-                        paymentUrl = paymentResponse.get("paymentUrl");
-                    }
-                } catch (Exception ex) {
-                    System.err.println("Failed to generate VNPay URL from payment service: " + ex.getMessage());
-                }
+                paymentUrl = fetchPaymentUrlWithCircuitBreaker(order.getId());
             }
 
             Map<String, Object> responseMap = new HashMap<>();
@@ -163,12 +154,50 @@ public class OrderController {
             		headerGenerator.getHeadersForSuccessPostMethod(request, order.getId()),
             		HttpStatus.CREATED);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("[OrderController] Failed to save order for userId={}: {}", userId, ex.getMessage(), ex);
             return new ResponseEntity<>("Đã xảy ra lỗi hệ thống khi lưu đơn hàng.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    
+
+    // ─── Circuit Breaker helpers ───────────────────────────────────────────────
+
+    /**
+     * Gọi user-service để lấy thông tin user.
+     * Circuit Breaker "userService" sẽ mở nếu user-service liên tục lỗi.
+     */
+    @CircuitBreaker(name = "userService", fallbackMethod = "fetchUserFallback")
+    private User fetchUserWithCircuitBreaker(Long userId) {
+        log.info("[CircuitBreaker] Calling user-service for userId={}", userId);
+        return userClient.getUserById(userId);
+    }
+
+    private User fetchUserFallback(Long userId, Throwable t) {
+        log.error("[CircuitBreaker] user-service unavailable for userId={}, reason={}", userId, t.getMessage());
+        return null; // OrderController kiểm tra null và trả 404
+    }
+
+    /**
+     * Gọi payment-service để lấy URL thanh toán VNPay.
+     * Circuit Breaker "paymentService" sẽ mở nếu payment-service liên tục lỗi.
+     */
+    @CircuitBreaker(name = "paymentService", fallbackMethod = "fetchPaymentUrlFallback")
+    private String fetchPaymentUrlWithCircuitBreaker(Long orderId) {
+        log.info("[CircuitBreaker] Calling payment-service for orderId={}", orderId);
+        Map<String, String> paymentResponse = paymentClient.getPaymentUrl(orderId);
+        if (paymentResponse != null && paymentResponse.containsKey("paymentUrl")) {
+            return paymentResponse.get("paymentUrl");
+        }
+        return "";
+    }
+
+    private String fetchPaymentUrlFallback(Long orderId, Throwable t) {
+        log.error("[CircuitBreaker] payment-service unavailable for orderId={}, reason={}", orderId, t.getMessage());
+        return ""; // Đơn hàng vẫn tạo được, chỉ thiếu link thanh toán
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     private Order createOrder(List<Item> cart, User user) {
         Order order = new Order();
         order.setItems(cart);
@@ -263,7 +292,7 @@ public class OrderController {
                 );
                 orderEventProducer.sendOrderEvent(event);
             } catch (Exception kafkaEx) {
-                System.err.println("Failed to send Kafka event on status update: " + kafkaEx.getMessage());
+                log.error("[Kafka] Failed to send order-status-updated event for orderId={}: {}", orderId, kafkaEx.getMessage());
             }
             return new ResponseEntity<>(order, HttpStatus.OK);
         }

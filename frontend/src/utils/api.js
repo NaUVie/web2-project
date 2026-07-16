@@ -34,6 +34,19 @@ export const api = {
     return res.json();
   },
 
+  loginWithGoogle: async (idToken) => {
+    const res = await fetch(`${API_BASE}/accounts/login/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Đăng nhập Google thất bại');
+    }
+    return res.json();
+  },
+
   forgotPassword: async (email) => {
     const res = await fetch(`${API_BASE}/accounts/forgot-password`, {
       method: 'POST',
@@ -136,8 +149,22 @@ export const api = {
   },
 
   // Catalog (Product Catalog Service)
-  getProducts: async () => {
-    const res = await fetch(`${API_BASE}/catalog/products`);
+  getProducts: async (categories = [], name = '') => {
+    const params = new URLSearchParams();
+    if (Array.isArray(categories)) {
+      categories.forEach(cat => {
+        if (cat && cat !== 'All') {
+          params.append('category', cat);
+        }
+      });
+    } else if (categories && categories !== 'All') {
+      params.append('category', categories);
+    }
+    if (name) params.append('name', name);
+    
+    const queryString = params.toString();
+    const url = queryString ? `${API_BASE}/catalog/products?${queryString}` : `${API_BASE}/catalog/products`;
+    const res = await fetch(url);
     if (!res.ok) return [];
     return res.json();
   },

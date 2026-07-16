@@ -28,6 +28,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         // 1. Bypass public paths
         if (path.equals("/api/accounts/login") || 
+            path.equals("/api/accounts/login/google") ||
             path.equals("/api/accounts/registration") ||
             path.equals("/api/accounts/refresh-token") ||
             path.equals("/api/accounts/logout") ||

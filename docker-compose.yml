@@ -111,10 +111,12 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      REDIS_HOST: redis
     depends_on:
       - db
       - eureka-server
       - kafka
+      - redis
     restart: always
 
   order-service:
@@ -182,6 +184,7 @@ services:
     environment:
       VITE_API_BASE: http://127.0.0.1:8900/api
       VITE_GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     depends_on:
       - api-gateway
     restart: always

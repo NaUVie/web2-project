@@ -19,9 +19,19 @@ public class ProductController {
     private HeaderGenerator headerGenerator;
 
     @GetMapping (value = "/products")
-    public ResponseEntity<List<Product>> getAllProducts(){
-        List<Product> products =  productService.getAllProduct();
-        if(!products.isEmpty()) {
+    public ResponseEntity<List<Product>> getProducts(
+            @RequestParam(value = "category", required = false) java.util.List<String> categories,
+            @RequestParam(value = "name", required = false) String name) {
+        
+        System.out.println("[DEBUG CONTROLLER] categories: " + categories + ", name: " + name);
+        List<Product> products;
+        if ((categories != null && !categories.isEmpty()) || (name != null && !name.trim().isEmpty())) {
+            products = productService.searchProducts(categories, name);
+        } else {
+            products = productService.getAllProduct();
+        }
+
+        if(products != null && !products.isEmpty()) {
         	return new ResponseEntity<List<Product>>(
         			products,
         			headerGenerator.getHeadersForSuccessGetMethod(),
@@ -30,20 +40,6 @@ public class ProductController {
         return new ResponseEntity<List<Product>>(
         		headerGenerator.getHeadersForError(),
         		HttpStatus.NOT_FOUND);       
-    }
-
-    @GetMapping(value = "/products", params = "category")
-    public ResponseEntity<List<Product>> getAllProductByCategory(@RequestParam ("category") String category){
-        List<Product> products = productService.getAllProductByCategory(category);
-        if(!products.isEmpty()) {
-        	return new ResponseEntity<List<Product>>(
-        			products,
-        			headerGenerator.getHeadersForSuccessGetMethod(),
-        			HttpStatus.OK);
-        }
-        return new ResponseEntity<List<Product>>(
-        		headerGenerator.getHeadersForError(),
-        		HttpStatus.NOT_FOUND);
     }
 
     @GetMapping (value = "/products/{id}")
@@ -56,20 +52,6 @@ public class ProductController {
         			HttpStatus.OK);
         }
         return new ResponseEntity<Product>(
-        		headerGenerator.getHeadersForError(),
-        		HttpStatus.NOT_FOUND);
-    }
-
-    @GetMapping (value = "/products", params = "name")
-    public ResponseEntity<List<Product>> getAllProductsByName(@RequestParam ("name") String name){
-        List<Product> products =  productService.getAllProductsByName(name);
-        if(!products.isEmpty()) {
-        	return new ResponseEntity<List<Product>>(
-        			products,
-        			headerGenerator.getHeadersForSuccessGetMethod(),
-        			HttpStatus.OK);
-        }
-        return new ResponseEntity<List<Product>>(
         		headerGenerator.getHeadersForError(),
         		HttpStatus.NOT_FOUND);
     }

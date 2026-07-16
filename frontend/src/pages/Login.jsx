@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../utils/api';
 
@@ -10,7 +10,51 @@ export default function Login({ onLoginSuccess }) {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // Register Form State
+  const handleGoogleLoginSuccess = async (response) => {
+    setErrorMsg('');
+    setSuccessMsg('');
+    setLoading(true);
+    try {
+      const data = await api.loginWithGoogle(response.credential);
+      setSuccessMsg('Đăng nhập Google thành công!');
+      onLoginSuccess(data);
+      setTimeout(() => {
+        if (data.role === 'ROLE_ADMIN') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
+      }, 800);
+    } catch (err) {
+      setErrorMsg(err.message || 'Đăng nhập Google thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'login') {
+      const initializeGoogleSignIn = () => {
+        if (window.google) {
+          window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            callback: handleGoogleLoginSuccess
+          });
+          const buttonDiv = document.getElementById("googleSignInDiv");
+          if (buttonDiv) {
+            window.google.accounts.id.renderButton(
+              buttonDiv,
+              { theme: "outline", size: "large", width: 320, text: "signin_with" }
+            );
+          }
+        } else {
+          setTimeout(initializeGoogleSignIn, 500);
+        }
+      };
+      initializeGoogleSignIn();
+    }
+  }, [activeTab]);
+
   const [regUsername, setRegUsername] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
@@ -368,6 +412,14 @@ export default function Login({ onLoginSuccess }) {
               >
                 {loading ? 'Đang xác thực...' : 'Đăng Nhập'}
               </button>
+
+              <div style={{ margin: '0.75rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <span style={{ height: '1px', flex: 1, backgroundColor: 'var(--glass-border)' }}></span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>HOẶC</span>
+                <span style={{ height: '1px', flex: 1, backgroundColor: 'var(--glass-border)' }}></span>
+              </div>
+
+              <div id="googleSignInDiv" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}></div>
 
               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                 Cần đăng nhập quản trị?{' '}

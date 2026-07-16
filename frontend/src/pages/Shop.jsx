@@ -9,7 +9,7 @@ export default function Shop({ onAddToCart, onBuyNow }) {
   const [loading, setLoading] = useState(true);
 
   // Filters state
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategories, setSelectedCategories] = useState(['All']);
   const [maxPrice, setMaxPrice] = useState(200000000);
   const [highestItemPrice, setHighestItemPrice] = useState(200000000);
   const [minPrice, setMinPrice] = useState(0);
@@ -26,21 +26,16 @@ export default function Shop({ onAddToCart, onBuyNow }) {
     const catParam = params.get('category');
     const searchParam = params.get('search');
 
-    if (catParam) setSelectedCategory(catParam);
+    if (catParam) {
+      setSelectedCategories(catParam.split(','));
+    }
     if (searchParam) setSearchKeyword(searchParam);
   }, [location.search]);
 
-  // Fetch products & categories
+  // Fetch categories (once)
   useEffect(() => {
-    setLoading(true);
-    Promise.all([api.getProducts(), api.getCategories()])
-      .then(([prodData, catData]) => {
-        setProducts(prodData);
-        if (prodData && prodData.length > 0) {
-          const maxVal = prodData.reduce((max, p) => Math.max(max, parseFloat(p.price || 0)), 0);
-          setHighestItemPrice(maxVal);
-          setMaxPrice(maxVal);
-        }
+    api.getCategories()
+      .then(catData => {
         if (catData && catData.length > 0) {
           setCategories(catData);
         } else {
@@ -52,27 +47,32 @@ export default function Shop({ onAddToCart, onBuyNow }) {
           ]);
         }
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
   }, []);
 
-  // Filter & Sort Logic
+  // Fetch products via API based on selectedCategories and searchKeyword (with 400ms debounce)
+  useEffect(() => {
+    setLoading(true);
+    const delayDebounceFn = setTimeout(() => {
+      api.getProducts(selectedCategories, searchKeyword)
+        .then(prodData => {
+          setProducts(prodData || []);
+          if (prodData && prodData.length > 0) {
+            const maxVal = prodData.reduce((max, p) => Math.max(max, parseFloat(p.price || 0)), 0);
+            setHighestItemPrice(maxVal);
+            setMaxPrice(prev => Math.min(prev, maxVal) || maxVal);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [selectedCategories, searchKeyword]);
+
+  // Filter & Sort Logic (Price filtering & sorting remaining in FE for smoothness)
   const getFilteredProducts = () => {
     let result = [...products];
-
-    // Filter by Search Keyword
-    if (searchKeyword.trim()) {
-      const keyword = searchKeyword.toLowerCase();
-      result = result.filter(p => 
-        p.productName.toLowerCase().includes(keyword) || 
-        p.discription.toLowerCase().includes(keyword)
-      );
-    }
-
-    // Filter by Category
-    if (selectedCategory !== 'All') {
-      result = result.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
-    }
 
     // Filter by Price range
     result = result.filter(p => {
@@ -108,10 +108,27 @@ export default function Shop({ onAddToCart, onBuyNow }) {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
 
+  // Toggle category in multi-select checkbox mode
+  const handleCategoryToggle = (catName) => {
+    if (catName === 'All') {
+      setSelectedCategories(['All']);
+    } else {
+      setSelectedCategories(prev => {
+        const withoutAll = prev.filter(c => c !== 'All');
+        if (withoutAll.includes(catName)) {
+          const updated = withoutAll.filter(c => c !== catName);
+          return updated.length === 0 ? ['All'] : updated;
+        } else {
+          return [...withoutAll, catName];
+        }
+      });
+    }
+  };
+
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, minPrice, maxPrice, searchKeyword, sortBy]);
+  }, [selectedCategories, minPrice, maxPrice, searchKeyword, sortBy]);
 
   return (
     <div className="container animate-fade-in" style={{ padding: '2rem 0 4rem 0' }}>
@@ -149,43 +166,35 @@ export default function Shop({ onAddToCart, onBuyNow }) {
 
           {/* Category Filter */}
           <div style={{ marginBottom: '1.5rem' }}>
-            <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Danh mục</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <button 
-                onClick={() => setSelectedCategory('All')}
-                style={{
-                  textAlign: 'left',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: 'none',
-                  background: selectedCategory === 'All' ? 'var(--accent-primary)' : 'transparent',
-                  color: selectedCategory === 'All' ? 'white' : 'var(--text-primary)',
-                  fontWeight: selectedCategory === 'All' ? 700 : 500,
-                  cursor: 'pointer',
-                  fontSize: '0.85rem'
-                }}
-              >
-                Tất Cả Sản Phẩm
-              </button>
-              {categories.map(cat => (
-                <button 
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.name)}
-                  style={{
-                    textAlign: 'left',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    background: selectedCategory === cat.name ? 'var(--accent-primary)' : 'transparent',
-                    color: selectedCategory === cat.name ? 'white' : 'var(--text-primary)',
-                    fontWeight: selectedCategory === cat.name ? 700 : 500,
-                    cursor: 'pointer',
-                    fontSize: '0.85rem'
-                  }}
-                >
-                  {cat.name}
-                </button>
-              ))}
+            <label className="form-label" style={{ display: 'block', marginBottom: '0.75rem' }}>Danh mục</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                <input 
+                  type="checkbox"
+                  checked={selectedCategories.includes('All')}
+                  onChange={() => handleCategoryToggle('All')}
+                  style={{ accentColor: 'var(--accent-primary)', width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <span style={{ fontWeight: selectedCategories.includes('All') ? 700 : 500, color: 'var(--text-primary)' }}>
+                  Tất Cả Sản Phẩm
+                </span>
+              </label>
+              {categories.map(cat => {
+                const isChecked = selectedCategories.includes(cat.name);
+                return (
+                  <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <input 
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleCategoryToggle(cat.name)}
+                      style={{ accentColor: 'var(--accent-primary)', width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontWeight: isChecked ? 700 : 500, color: 'var(--text-primary)' }}>
+                      {cat.name}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
           </div>
 

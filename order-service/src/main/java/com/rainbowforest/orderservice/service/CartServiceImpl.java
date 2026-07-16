@@ -5,10 +5,13 @@ import com.rainbowforest.orderservice.domain.Product;
 import com.rainbowforest.orderservice.feignclient.ProductClient;
 import com.rainbowforest.orderservice.redis.CartRedisRepository;
 import com.rainbowforest.orderservice.utilities.CartUtilities;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
+@Slf4j
 @Service
 public class CartServiceImpl implements CartService {
 
@@ -19,10 +22,22 @@ public class CartServiceImpl implements CartService {
     private CartRedisRepository cartRedisRepository;
 
     @Override
+    @CircuitBreaker(name = "productService", fallbackMethod = "addItemToCartFallback")
     public void addItemToCart(String cartId, Long productId, Integer quantity) {
+        log.info("[CartService] Fetching product id={} from product-catalog-service", productId);
         Product product = productClient.getProductById(productId);
-        Item item = new Item(quantity,product, CartUtilities.getSubTotalForItem(product,quantity));
+        Item item = new Item(quantity, product, CartUtilities.getSubTotalForItem(product, quantity));
         cartRedisRepository.addItemToCart(cartId, item);
+        log.info("[CartService] Added product id={} to cart id={}", productId, cartId);
+    }
+
+    /**
+     * Fallback khi product-catalog-service không khả dụng (Circuit Breaker mở).
+     */
+    public void addItemToCartFallback(String cartId, Long productId, Integer quantity, Throwable t) {
+        log.error("[CircuitBreaker] product-catalog-service unavailable. cartId={}, productId={}, reason={}",
+                cartId, productId, t.getMessage());
+        throw new RuntimeException("Dịch vụ sản phẩm tạm thời không khả dụng. Vui lòng thử lại sau.");
     }
 
     @Override

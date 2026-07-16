@@ -33,7 +33,115 @@ public class AuthController {
     @Autowired
     private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
+    @Autowired
+    private com.rainbowforest.userservice.repository.UserRoleRepository roleRepository;
+
     private static final Map<String, String> resetTokens = new ConcurrentHashMap<>();
+
+    @PostMapping("/login/google")
+    public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> payload) {
+        String idToken = payload.get("idToken");
+        if (idToken == null || idToken.trim().isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Thiếu Google ID Token");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        try {
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            String verifyUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> googleProfile = restTemplate.getForObject(verifyUrl, Map.class);
+            
+            if (googleProfile == null || googleProfile.get("error_description") != null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Google ID Token không hợp lệ");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+
+            String email = (String) googleProfile.get("email");
+            String name = (String) googleProfile.get("name");
+            
+            if (email == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Không thể lấy email từ Google");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            User user = userService.getUserByEmail(email);
+            if (user == null) {
+                user = new User();
+                String baseUsername = email.split("@")[0];
+                String username = baseUsername;
+                int count = 0;
+                while (userService.getUserByName(username) != null) {
+                    count++;
+                    username = baseUsername + count;
+                }
+                user.setUserName(username);
+                user.setUserPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+                user.setActive(1);
+
+                com.rainbowforest.userservice.entity.UserDetails details = new com.rainbowforest.userservice.entity.UserDetails();
+                details.setEmail(email);
+                
+                String firstName = "Google";
+                String lastName = "User";
+                if (name != null && !name.trim().isEmpty()) {
+                    String[] nameParts = name.trim().split(" ");
+                    if (nameParts.length > 0) {
+                        lastName = nameParts[nameParts.length - 1];
+                        if (nameParts.length > 1) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int i = 0; i < nameParts.length - 1; i++) {
+                                sb.append(nameParts[i]).append(" ");
+                            }
+                            firstName = sb.toString().trim();
+                        } else {
+                            firstName = lastName;
+                        }
+                    }
+                }
+                details.setFirstName(firstName);
+                details.setLastName(lastName);
+                details.setPhoneNumber("");
+                details.setStreet("");
+                details.setStreetNumber("");
+                details.setZipCode("");
+                details.setLocality("");
+                details.setCountry("");
+                
+                user.setUserDetails(details);
+                
+                com.rainbowforest.userservice.entity.UserRole userRole = roleRepository.findUserRoleByRoleName("ROLE_USER");
+                user.setRole(userRole);
+
+                user = userService.saveUser(user);
+            }
+
+            String role = user.getRole() != null ? user.getRole().getRoleName() : "ROLE_USER";
+            String token = jwtTokenUtil.generateToken(user.getUserName(), role, user.getId());
+            String refreshToken = UUID.randomUUID().toString();
+
+            redisTemplate.opsForValue().set("refresh_token:" + refreshToken, String.valueOf(user.getId()), 7, TimeUnit.DAYS);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("refreshToken", refreshToken);
+            response.put("username", user.getUserName());
+            response.put("role", role);
+            response.put("userId", user.getId());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("Lỗi xác thực Google Token: " + e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Đã xảy ra lỗi khi liên kết tài khoản Google: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
