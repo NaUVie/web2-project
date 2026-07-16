@@ -10,6 +10,10 @@ spring:
     multipart:
       max-file-size: 30MB
       max-request-size: 30MB
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
   cloud:
     gateway:
       globalcors:
@@ -25,18 +29,33 @@ spring:
             - Path=/api/accounts/**
           filters:
             - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 15
+                redis-rate-limiter.burstCapacity: 30
+                key-resolver: "#{@userKeyResolver}"
         - id: product-catalog-service
           uri: lb://product-catalog-service
           predicates:
             - Path=/api/catalog/**
           filters:
             - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
         - id: order-service
           uri: lb://order-service
           predicates:
             - Path=/api/shop/**
           filters:
             - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
         - id: product-recommendation-service
           uri: lb://product-recommendation-service
           predicates:

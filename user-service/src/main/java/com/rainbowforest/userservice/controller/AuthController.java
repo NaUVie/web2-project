@@ -4,6 +4,7 @@ import com.rainbowforest.userservice.entity.User;
 import com.rainbowforest.userservice.security.JwtTokenUtil;
 import com.rainbowforest.userservice.service.UserService;
 import com.rainbowforest.userservice.service.EmailService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @RestController
+@Slf4j
 public class AuthController {
 
     @Autowired
@@ -136,7 +138,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Lỗi xác thực Google Token: " + e.getMessage());
+            log.error("Lỗi xác thực Google Token: ", e);
             Map<String, String> error = new HashMap<>();
             error.put("message", "Đã xảy ra lỗi khi liên kết tài khoản Google: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
