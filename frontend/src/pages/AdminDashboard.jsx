@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, FolderTree, FileText, Image, Users, ShoppingCart, Plus, Edit, Trash2, Check, X, RefreshCw, Eye } from 'lucide-react';
+import { Package, FolderTree, FileText, Image, Users, ShoppingCart, Plus, Edit, Trash2, Check, X, RefreshCw, Eye, TrendingUp, LayoutDashboard, AlertTriangle, BarChart3 } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function AdminDashboard({ user, openAuthModal }) {
   const navigate = useNavigate();
 
-  // Tabs: 'products', 'categories', 'blog-cats', 'blogs', 'banners', 'users', 'orders'
-  const [activeTab, setActiveTab] = useState('products');
+  // Tabs: 'dashboard', 'products', 'categories', 'blog-cats', 'blogs', 'banners', 'users', 'orders'
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   // Entities lists state
   const [products, setProducts] = useState([]);
@@ -17,6 +17,7 @@ export default function AdminDashboard({ user, openAuthModal }) {
   const [banners, setBanners] = useState([]);
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [revenueStats, setRevenueStats] = useState({ totalRevenue: 0, completedOrdersCount: 0, pendingOrdersCount: 0, failedOrdersCount: 0, totalOrdersCount: 0 });
 
   // Create/Edit Modals state
   const [showModal, setShowModal] = useState(false);
@@ -78,8 +79,9 @@ export default function AdminDashboard({ user, openAuthModal }) {
       api.getBlogs().catch(() => []),
       api.getAllBannersAdmin().catch(() => []),
       api.getUsersList().catch(() => []),
-      api.getAllOrdersAdmin().catch(() => [])
-    ]).then(([prods, cats, bcats, posts, bns, usrs, ords]) => {
+      api.getAllOrdersAdmin().catch(() => []),
+      api.getRevenueStatistics().catch(() => ({ totalRevenue: 0, completedOrdersCount: 0, pendingOrdersCount: 0, failedOrdersCount: 0, totalOrdersCount: 0 }))
+    ]).then(([prods, cats, bcats, posts, bns, usrs, ords, stats]) => {
       setProducts(prods);
       setCategories(cats);
       setBlogCategories(bcats);
@@ -87,6 +89,7 @@ export default function AdminDashboard({ user, openAuthModal }) {
       setBanners(bns);
       setUsers(usrs);
       setOrders(ords);
+      setRevenueStats(stats);
     }).finally(() => setLoading(false));
   }, [user, refreshTrigger]);
 
@@ -261,6 +264,141 @@ export default function AdminDashboard({ user, openAuthModal }) {
     setShowModal(true);
   };
 
+  // 1. Low stock products (availability <= 5)
+  const lowStockProducts = products.filter(p => p.availability <= 5);
+
+  // 2. Revenue timeline data
+  const getRevenueTimelineData = () => {
+    const dailyData = {};
+    orders.forEach(ord => {
+      if (ord.status === 'DELIVERED' || ord.status === 'COMPLETED' || ord.status === 'PAID') {
+        const dateStr = ord.orderedDate || 'Chưa rõ';
+        const dateKey = dateStr.split(' ')[0] || dateStr; 
+        dailyData[dateKey] = (dailyData[dateKey] || 0) + parseFloat(ord.total || 0);
+      }
+    });
+
+    const sortedKeys = Object.keys(dailyData).sort();
+    return sortedKeys.map(key => ({
+      date: key,
+      revenue: dailyData[key]
+    }));
+  };
+
+  const timelineData = getRevenueTimelineData();
+
+  // 3. Category distribution data
+  const getCategoryDistribution = () => {
+    const catData = {};
+    products.forEach(p => {
+      const cat = p.category || 'Khác';
+      catData[cat] = (catData[cat] || 0) + 1;
+    });
+    return Object.keys(catData).map(cat => ({
+      category: cat,
+      count: catData[cat]
+    }));
+  };
+
+  const categoryDist = getCategoryDistribution();
+
+  // 4. Render SVG timeline chart
+  const renderRevenueTimelineChart = () => {
+    if (timelineData.length === 0) {
+      return (
+        <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+          Chưa có dữ liệu doanh thu đơn hàng để lập biểu đồ.
+        </div>
+      );
+    }
+
+    const width = 500;
+    const height = 200;
+    const padding = 35;
+
+    const maxRevenue = Math.max(...timelineData.map(d => d.revenue), 1);
+    
+    const points = timelineData.map((d, index) => {
+      const x = padding + (index * (width - padding * 2)) / Math.max(timelineData.length - 1, 1);
+      const y = height - padding - (d.revenue * (height - padding * 2)) / maxRevenue;
+      return { x, y, label: d.date, value: d.revenue };
+    });
+
+    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const areaPath = points.length > 0 
+      ? `${linePath} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`
+      : '';
+
+    return (
+      <div style={{ position: 'relative' }}>
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="220px" style={{ overflow: 'visible' }}>
+          <defs>
+            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--accent-primary)" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="var(--accent-primary)" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+          
+          <line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="var(--border-color)" strokeDasharray="3,3" />
+          <line x1={padding} y1={height / 2} x2={width - padding} y2={height / 2} stroke="var(--border-color)" strokeDasharray="3,3" />
+          <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="var(--border-color)" />
+
+          {areaPath && <path d={areaPath} fill="url(#chartGrad)" />}
+          {linePath && <path d={linePath} fill="none" stroke="var(--accent-primary)" strokeWidth="3" />}
+          
+          {points.map((p, idx) => (
+            <g key={idx}>
+              <circle cx={p.x} cy={p.y} r="4" fill="var(--bg-primary)" stroke="var(--accent-primary)" strokeWidth="2" />
+              <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fill="var(--text-secondary)" fontWeight="bold">
+                {p.value >= 1000000 ? `${(p.value / 1000000).toFixed(1)}M` : p.value.toLocaleString('vi-VN')}
+              </text>
+              <text x={p.x} y={height - 10} textAnchor="middle" fontSize="9" fill="var(--text-muted)">
+                {p.label.substring(5)}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
+    );
+  };
+
+  // 5. Render Category Progress bars
+  const renderCategoryDistribution = () => {
+    if (categoryDist.length === 0) {
+      return (
+        <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+          Chưa có dữ liệu danh mục sản phẩm.
+        </div>
+      );
+    }
+
+    const totalProducts = products.length || 1;
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '0.5rem 0' }}>
+        {categoryDist.map((c, idx) => {
+          const percentage = Math.round((c.count / totalProducts) * 100);
+          return (
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', textAlign: 'left' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600 }}>
+                <span style={{ color: 'var(--text-primary)' }}>{c.category}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{c.count} sản phẩm ({percentage}%)</span>
+              </div>
+              <div style={{ height: '8px', backgroundColor: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${percentage}%`,
+                  background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))',
+                  borderRadius: '4px'
+                }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="container animate-fade-in" style={{ padding: '2rem 0 4rem 0', textAlign: 'left' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -280,6 +418,9 @@ export default function AdminDashboard({ user, openAuthModal }) {
         {/* Sidebar Nav */}
         <aside className="glass-panel" style={{ padding: '1rem', borderRadius: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <button onClick={() => setActiveTab('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeTab === 'dashboard' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'dashboard' ? 'white' : 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+              <LayoutDashboard size={18} /> Tổng quan
+            </button>
             <button onClick={() => setActiveTab('products')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeTab === 'products' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'products' ? 'white' : 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
               <Package size={18} /> Sản phẩm
             </button>
@@ -301,6 +442,9 @@ export default function AdminDashboard({ user, openAuthModal }) {
             <button onClick={() => { setActiveTab('orders'); setOrderPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeTab === 'orders' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'orders' ? 'white' : 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
               <ShoppingCart size={18} /> Đơn hàng
             </button>
+            <button onClick={() => setActiveTab('statistics')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeTab === 'statistics' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'statistics' ? 'white' : 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+              <TrendingUp size={18} /> Thống kê doanh thu
+            </button>
           </div>
         </aside>
 
@@ -311,6 +455,164 @@ export default function AdminDashboard({ user, openAuthModal }) {
             <div style={{ textAlign: 'center', padding: '4rem 0', fontWeight: 600 }}>Đang tải cơ sở dữ liệu...</div>
           ) : (
             <>
+              {/* Tab: Dashboard Overview */}
+              {activeTab === 'dashboard' && (
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Tổng Quan Hoạt Động Cửa Hàng</h3>
+
+                  {/* Overview Cards Row */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: '1.5rem',
+                    marginBottom: '2rem'
+                  }}>
+                    {/* Revenue Card */}
+                    <div className="glass-panel" style={{
+                      padding: '1.5rem',
+                      borderRadius: '16px',
+                      background: 'linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(219,39,119,0.15) 100%)',
+                      border: '1px solid rgba(124, 58, 237, 0.25)',
+                      textAlign: 'left',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '0.5rem' }}>Tổng Doanh Thu</div>
+                      <div style={{ fontSize: '1.85rem', fontWeight: 900, color: 'var(--accent-primary)', textShadow: '0 2px 10px rgba(124, 58, 237, 0.2)' }}>
+                        {(revenueStats.totalRevenue || 0).toLocaleString('vi-VN')} đ
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                        Tính trên {revenueStats.completedOrdersCount} đơn thành công
+                      </div>
+                    </div>
+
+                    {/* Low Stock Warning Card */}
+                    <div className="glass-panel" style={{
+                      padding: '1.5rem',
+                      borderRadius: '16px',
+                      borderLeft: '4px solid #ef4444',
+                      textAlign: 'left',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setActiveTab('products')}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Sản Phẩm Gần Hết</div>
+                        <AlertTriangle size={18} style={{ color: '#ef4444' }} />
+                      </div>
+                      <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#ef4444', margin: '0.35rem 0' }}>
+                        {lowStockProducts.length} <span style={{ fontSize: '1rem', fontWeight: 500 }}>mặt hàng</span>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Có mức tồn kho ≤ 5 sản phẩm
+                      </div>
+                    </div>
+
+                    {/* Total Orders Card */}
+                    <div className="glass-panel" style={{
+                      padding: '1.5rem',
+                      borderRadius: '16px',
+                      borderLeft: '4px solid #10b981',
+                      textAlign: 'left',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setActiveTab('orders')}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Tổng Số Đơn Hàng</div>
+                        <ShoppingCart size={18} style={{ color: '#10b981' }} />
+                      </div>
+                      <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#10b981', margin: '0.35rem 0' }}>
+                        {revenueStats.totalOrdersCount || 0} <span style={{ fontSize: '1rem', fontWeight: 500 }}>đơn</span>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {revenueStats.pendingOrdersCount} đang xử lý / {revenueStats.failedOrdersCount} hủy
+                      </div>
+                    </div>
+
+                    {/* Total Products Card */}
+                    <div className="glass-panel" style={{
+                      padding: '1.5rem',
+                      borderRadius: '16px',
+                      borderLeft: '4px solid var(--accent-secondary)',
+                      textAlign: 'left',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setActiveTab('products')}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Tổng Sản Phẩm</div>
+                        <Package size={18} style={{ color: 'var(--accent-secondary)' }} />
+                      </div>
+                      <div style={{ fontSize: '1.85rem', fontWeight: 900, color: 'var(--accent-secondary)', margin: '0.35rem 0' }}>
+                        {products.length} <span style={{ fontSize: '1rem', fontWeight: 500 }}>mẫu</span>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Phân bổ trên {categories.length} danh mục chính
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Low Stock Warning Alert List */}
+                  {lowStockProducts.length > 0 && (
+                    <div className="glass-panel" style={{
+                      borderLeft: '4px solid #ef4444',
+                      backgroundColor: 'rgba(239, 68, 68, 0.03)',
+                      padding: '1.5rem',
+                      borderRadius: '12px',
+                      marginBottom: '2rem',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#ef4444', marginBottom: '1rem', fontWeight: 700 }}>
+                        <AlertTriangle size={20} />
+                        <span>Cảnh Báo: Sản Phẩm Sắp Hết Hàng ({lowStockProducts.length})</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                        {lowStockProducts.map(p => (
+                          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', backgroundColor: 'var(--bg-secondary)' }}>
+                            <img src={p.imageUrl} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{p.productName}</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mục: {p.category}</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                              <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: 800 }}>Chỉ còn {p.availability}</span>
+                              <button onClick={() => { setActiveTab('products'); openEditModal('edit-prod', p); }} style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', cursor: 'pointer', border: 'none', background: 'var(--accent-primary)', color: 'white', borderRadius: '4px', marginTop: '0.25rem' }}>Nhập hàng</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Charts Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                    gap: '2rem',
+                    marginBottom: '2rem'
+                  }}>
+                    {/* Revenue Timeline Chart Card */}
+                    <div className="glass-panel" style={{ padding: '2rem', borderRadius: '16px', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                        <BarChart3 size={18} style={{ color: 'var(--accent-primary)' }} />
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Xu Hướng Doanh Thu</h4>
+                      </div>
+                      {renderRevenueTimelineChart()}
+                    </div>
+
+                    {/* Category Distribution progress chart */}
+                    <div className="glass-panel" style={{ padding: '2rem', borderRadius: '16px', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                        <TrendingUp size={18} style={{ color: 'var(--accent-secondary)' }} />
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Cơ Cấu Sản Phẩm Theo Danh Mục</h4>
+                      </div>
+                      {renderCategoryDistribution()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Tab 1: Products Panel */}
               {activeTab === 'products' && (
                 <div>
@@ -731,6 +1033,74 @@ export default function AdminDashboard({ user, openAuthModal }) {
                   </div>
                 );
               })()}
+
+              {/* Tab 8: Statistics Panel */}
+              {activeTab === 'statistics' && (
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Báo Cáo & Thống Kê Doanh Thu</h3>
+                  
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: '1.5rem',
+                    marginBottom: '2.5rem'
+                  }}>
+                    <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid var(--accent-primary)', textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Tổng Doanh Thu (Đơn hoàn thành)</div>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {(revenueStats.totalRevenue || 0).toLocaleString('vi-VN')} đ
+                      </div>
+                    </div>
+
+                    <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid #10b981', textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Đơn Hàng Đã Giao</div>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {revenueStats.completedOrdersCount || 0} đơn
+                      </div>
+                    </div>
+
+                    <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid #fbbf24', textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Đơn Hàng Chờ Xử Lý</div>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {revenueStats.pendingOrdersCount || 0} đơn
+                      </div>
+                    </div>
+
+                    <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid #ef4444', textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Đơn Hàng Thất Bại / Hủy</div>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {revenueStats.failedOrdersCount || 0} đơn
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '2rem', borderRadius: '16px', textAlign: 'left' }}>
+                    <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', fontWeight: 700 }}>Tóm Tắt Hoạt Động</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                        <span>Tổng số đơn đặt hàng:</span>
+                        <strong>{revenueStats.totalOrdersCount || 0} đơn</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                        <span>Tỷ lệ hoàn thành đơn hàng:</span>
+                        <strong>
+                          {revenueStats.totalOrdersCount > 0 
+                            ? Math.round((revenueStats.completedOrdersCount / revenueStats.totalOrdersCount) * 100) 
+                            : 0}%
+                        </strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem' }}>
+                        <span>Doanh thu trung bình trên mỗi đơn hàng:</span>
+                        <strong>
+                          {revenueStats.completedOrdersCount > 0 
+                            ? Math.round(revenueStats.totalRevenue / revenueStats.completedOrdersCount).toLocaleString('vi-VN') 
+                            : 0} đ
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

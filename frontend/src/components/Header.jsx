@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, LogOut, Sun, Moon, Settings } from 'lucide-react';
+import { Search, ShoppingCart, User, LogOut, Sun, Moon, Settings, FileText } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function Header({ cartCount, user, onLogout, openAuthModal, theme, toggleTheme }) {
@@ -237,6 +237,14 @@ export default function Header({ cartCount, user, onLogout, openAuthModal, theme
               }}>
                 <User size={18} />
                 <span>{user.username}</span>
+              </Link>
+
+              <Link to="/profile?tab=orders" title="Đơn hàng của tôi" style={{
+                color: 'var(--text-primary)',
+                display: 'inline-flex',
+                alignItems: 'center'
+              }}>
+                <FileText size={18} />
               </Link>
 
               {/* Admin Panel Access Link */}

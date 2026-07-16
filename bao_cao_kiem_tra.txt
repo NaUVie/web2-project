@@ -1,0 +1,72 @@
+=========================================================================================================================================
+                                     BÁO CÁO KIỂM TRA & NGHIỆM THU DỰ ÁN MICROSERVICES
+=========================================================================================================================================
+Dự án: Hệ thống E-Commerce Microservices (Nexus Shop)
+Tập tin yêu cầu gốc: yeucau.md
+Thời gian kiểm tra: 16-07-2026
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+| LAB   | YÊU CẦU CHI TIẾT                                            | TRẠNG THÁI     | ĐƯỜNG DẪN CODE KIỂM CHỨNG                              |
+-----------------------------------------------------------------------------------------------------------------------------------------
+| Lab 1 | Tách Monolithic thành Microservices (Product, Order, User)  | ĐÃ HOÀN THÀNH  | Toàn bộ cấu trúc thư mục dự án                         |
+| Lab 1 | Sử dụng OpenFeign hoặc RestTemplate                         | ĐÃ HOÀN THÀNH  | order-service/.../feignclient/ProductClient.java       |
+| Lab 1 | Order Service gọi API Product & User Service lấy thông tin  | ĐÃ HOÀN THÀNH  | order-service/.../controller/OrderController.java      |
+| Lab 1 | Order Service tra cứu thông tin sản phẩm khi tạo đơn hàng   | ĐÃ HOÀN THÀNH  | order-service/.../service/CartServiceImpl.java         |
+| Lab 1 | Cung cấp API kiểm tra khách hàng trước khi tạo đơn hàng     | ĐÃ HOÀN THÀNH  | user-service/.../controller/UserController.java        |
+| Lab 1 | Kết quả đặt hàng đầy đủ (Sản phẩm, User, Số lượng, Tổng tiền)| ĐÃ HOÀN THÀNH  | order-service/.../domain/Order.java                    |
+| Lab 1 | Sử dụng Kafka xử lý tác vụ bất đồng bộ sau khi đặt hàng     | ĐÃ HOÀN THÀNH  | order-service/.../kafka/OrderEventProducer.java        |
+|-------+-------------------------------------------------------------+----------------+--------------------------------------------------------|
+| Lab 2 | Saga: Giao hàng thành công (DELIVERED) cập nhật giảm kho     | ĐÃ HOÀN THÀNH  | product-catalog-service/.../kafka/OrderEventConsumer.ja|
+| Lab 2 | Khách đổi SĐT mặc định, giữ nguyên thông tin hóa đơn cũ     | ĐÃ HOÀN THÀNH  | order-service/.../kafka/UserProfileUpdatedConsumer.java|
+| Lab 2 | Thống kê doanh thu đơn hàng thành công                      | ĐÃ HOÀN THÀNH  | order-service/.../service/OrderServiceImpl.java        |
+| Lab 2 | Gửi email SMTP thông báo lỗi Saga cho admin                 | ĐÃ HOÀN THÀNH  | order-service/.../kafka/OrderCompensationConsumer.java |
+| Lab 2 | Sử dụng Redis và MongoDB giải quyết vấn đề                  | REDIS: ĐÃ XONG | user-service/.../controller/AuthController.java        |
+|       |                                                             | MONGO: CHƯA    | (Hệ thống chưa cài đặt/tích hợp MongoDB)               |
+|-------+-------------------------------------------------------------+----------------+--------------------------------------------------------|
+| Lab 3 | Đăng ký tài khoản mới, mã hóa mật khẩu                      | ĐÃ HOÀN THÀNH  | user-service/.../service/UserServiceImpl.java          |
+| Lab 3 | Đăng nhập đúng cấp Access Token & Refresh Token             | ĐÃ HOÀN THÀNH  | user-service/.../controller/AuthController.java        |
+| Lab 3 | Gọi API không có Token hoặc sai mật khẩu bị từ chối         | ĐÃ HOÀN THÀNH  | api-gateway/.../filter/JwtAuthenticationFilter.java    |
+| Lab 3 | Phân quyền USER và ADMIN tại Gateway                        | ĐÃ HOÀN THÀNH  | api-gateway/.../filter/JwtAuthenticationFilter.java    |
+| Lab 3 | Kiểm tra quyền sở hữu đơn hàng (Ownership)                  | ĐÃ HOÀN THÀNH  | order-service/.../controller/OrderController.java      |
+| Lab 3 | OpenFeign tự động đính kèm và truyền Token                  | ĐÃ HOÀN THÀNH  | order-service/.../config/FeignClientConfig.java        |
+| Lab 3 | Swagger / OpenAPI gom nhóm API ở Gateway                    | ĐÃ HOÀN THÀNH  | api-gateway/.../resources/application.yml              |
+|-------+-------------------------------------------------------------+----------------+--------------------------------------------------------|
+| Lab 4 | Dockerize Eureka Server và API Gateway                      | ĐÃ HOÀN THÀNH  | eureka-server/Dockerfile, api-gateway/Dockerfile       |
+| Lab 4 | docker-compose.yml chạy tối thiểu 5 container (chạy 13 cái) | ĐÃ HOÀN THÀNH  | docker-compose.yml                                     |
+| Lab 4 | Sử dụng Docker Volume mysql-data cho database               | ĐÃ HOÀN THÀNH  | docker-compose.yml                                     |
+| Lab 4 | Thêm Spring Boot Actuator (/health, /metrics)               | ĐÃ HOÀN THÀNH  | application.properties từng service                    |
+| Lab 4 | Thêm Circuit Breaker Resilience4j khi gọi Catalog           | ĐÃ HOÀN THÀNH  | order-service/.../feignclient/ProductClientFallback.jav|
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+=========================================================================================================================================
+                                                 ĐỐI CHIẾU KỊCH BẢN BẢO MẬT (LAB 3 - CÂU 1)
+=========================================================================================================================================
+-----------------------------------------------------------------------------------------------------------------------------------------
+| STT | TÌNH HUỐNG KIỂM THỬ                     | KẾT QUẢ MONG ĐỢI                  | THỰC TẾ        | CƠ CHẾ KIỂM SOÁT BẢO MẬT                 |
+-----------------------------------------------------------------------------------------------------------------------------------------
+| 1   | Đăng ký user mới                        | Thành công, password được mã hóa  | ĐÃ ĐẠT         | BCryptPasswordEncoder trong User Service |
+| 2   | Login đúng username/password            | Nhận Access Token & Refresh Token | ĐÃ ĐẠT         | Sinh JWT + Lưu Refresh Token vào Redis   |
+| 3   | Login sai password                      | Không cấp token                   | ĐÃ ĐẠT         | PasswordEncoder.matches trả về false     |
+| 4   | Gọi API tạo đơn không có token          | 401 Unauthorized                  | ĐÃ ĐẠT         | Chặn tại JwtAuthenticationFilter ở GW    |
+| 5   | USER tạo đơn hàng                       | Thành công                        | ĐÃ ĐẠT         | Token hợp lệ được đi tiếp                |
+| 6   | USER thêm sản phẩm                      | 403 Forbidden                     | ĐÃ ĐẠT         | Chặn POST/PUT/DELETE tại Gateway         |
+| 7   | ADMIN thêm sản phẩm                     | Thành công                        | ĐÃ ĐẠT         | Bypass check ở Gateway cho ROLE_ADMIN    |
+| 8   | User A xem đơn User B                   | 403 Forbidden hoặc 404            | ĐÃ ĐẠT         | So khớp X-User-Id với chủ sở hữu đơn hàng|
+| 9   | Dùng Refresh Token cấp Access Token mới | Thành công                        | ĐÃ ĐẠT         | API /refresh-token kiểm tra Redis        |
+| 10  | Logout rồi dùng Refresh Token cũ        | 401 Unauthorized                  | ĐÃ ĐẠT         | API /logout xóa Refresh Token trên Redis |
+| 11  | Sửa Payload JWT rồi gọi API             | 401 Unauthorized                  | ĐÃ ĐẠT         | Chữ ký JWT sai, validateToken thất bại   |
+| 12  | Token hết hạn                           | 401 Unauthorized                  | ĐÃ ĐẠT         | ExpiredJwtException được bắt tại Gateway |
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+=========================================================================================================================================
+                                            GIẢI THÍCH LÝ THUYẾT & LỰA CHỌN CÔNG NGHỆ (LAB 1)
+=========================================================================================================================================
+1. OpenFeign vs RestTemplate:
+   - OpenFeign mang tính khai báo (declarative), chỉ cần khai báo interface giúp code gọn hơn so với RestTemplate tự viết URL/HttpEntity.
+   - Ví dụ: ProductClient gọi product-catalog-service được khai báo đơn giản bằng annotation và tích hợp sẵn Load Balancer & Fallback.
+
+2. Kafka vs RabbitMQ:
+   - Kafka phù hợp cho lượng luồng dữ liệu lớn (high throughput), lưu trữ vĩnh viễn tin nhắn trên đĩa cứng và cho phép replay.
+   - Ví dụ: Khi đơn hàng thành công, bắn tin nhắn để product-catalog-service giảm kho. Dễ dàng scale thêm các consumer khác sau này.
+
+LƯU Ý LỚN: MongoDB (Lab 2) chưa được sử dụng (chỉ mới dùng Redis). Bạn hãy kiểm tra xem giảng viên có bắt buộc phải có MongoDB không nhé.

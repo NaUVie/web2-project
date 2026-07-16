@@ -128,3 +128,29 @@ Thêm Spring Boot Actuator
 Kiểm tra endpoint:  /actuator/health ,  /actuator/metrics
 Thêm Circuit Breaker khi Order Service gọi Product Service.
 Thực hiện test Product Service bị dừng và trình bày kết quả.
+
+
+
+
+ĐỒ ÁN CUỐI MÔN: CHUYÊN ĐỀ LẬP TRÌNH WEB 2
+
+1. Yêu cầu đồ án
+Sinh viên xây dựng một hệ thống Web theo kiến trúc Microservices, có Frontend,
+Backend, cơ sở dữ liệu, bảo mật, giao tiếp giữa các service và triển khai bằng Docker.
+Hệ thống nên sử dụng các công nghệ/chức năng sau:
+1. Spring Boot
+2. Microservices
+3. Frontend
+4. SQL Database: MySQL hoặc PostgreSQL
+5. NoSQL: Redis hoặc MongoDB
+6. Authentication &amp; Authorization: JWT Security
+7. Load Balancing &amp; Scaling: Eureka Server, API Gateway
+8. Giao tiếp đồng bộ: OpenFeign,…
+9. Giao tiếp bất đồng bộ: Kafka hoặc RabbitMQ
+10. Logging &amp; Error Handling
+11. Rate Limiting
+12. Caching
+13. Availability &amp; Recovery (nếu có)
+14. Docker (điểm cộng)
+15. Cloud &amp; Compute (Gợi ý)
+16. Báo cáo, Demo và Phản biện

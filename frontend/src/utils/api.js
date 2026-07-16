@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8900/api';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8900/api';
 
 const getAuthHeaders = (extraHeaders = {}) => {
   const savedUser = localStorage.getItem('nexus_user');
@@ -418,6 +418,14 @@ export const api = {
       body: JSON.stringify({ status, paymentStatus })
     });
     if (!res.ok) throw new Error('Cập nhật trạng thái đơn hàng thất bại');
+    return res.json();
+  },
+
+  getRevenueStatistics: async () => {
+    const res = await fetch(`${API_BASE}/shop/orders/statistics/revenue`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Không thể tải thống kê doanh thu');
     return res.json();
   },
 

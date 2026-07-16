@@ -3,7 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { SlidersHorizontal, ArrowUpDown, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 import { api } from '../utils/api';
 
-export default function Shop({ onAddToCart }) {
+export default function Shop({ onAddToCart, onBuyNow }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,6 +11,7 @@ export default function Shop({ onAddToCart }) {
   // Filters state
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [maxPrice, setMaxPrice] = useState(200000000);
+  const [highestItemPrice, setHighestItemPrice] = useState(200000000);
   const [minPrice, setMinPrice] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [sortBy, setSortBy] = useState('name-asc'); // 'price-asc', 'price-desc', 'name-asc'
@@ -35,6 +36,11 @@ export default function Shop({ onAddToCart }) {
     Promise.all([api.getProducts(), api.getCategories()])
       .then(([prodData, catData]) => {
         setProducts(prodData);
+        if (prodData && prodData.length > 0) {
+          const maxVal = prodData.reduce((max, p) => Math.max(max, parseFloat(p.price || 0)), 0);
+          setHighestItemPrice(maxVal);
+          setMaxPrice(maxVal);
+        }
         if (catData && catData.length > 0) {
           setCategories(catData);
         } else {
@@ -191,7 +197,7 @@ export default function Shop({ onAddToCart }) {
             <input 
               type="range" 
               min="0" 
-              max="200000000" 
+              max={highestItemPrice} 
               step="500000"
               value={maxPrice}
               onChange={(e) => setMaxPrice(parseInt(e.target.value))}
@@ -199,7 +205,7 @@ export default function Shop({ onAddToCart }) {
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
               <span>0 đ</span>
-              <span>200.000.000 đ</span>
+              <span>{highestItemPrice.toLocaleString('vi-VN')} đ</span>
             </div>
           </div>
         </aside>
@@ -301,14 +307,50 @@ export default function Shop({ onAddToCart }) {
                         )}
                       </div>
 
-                      <button 
-                        disabled={p.availability <= 0}
-                        onClick={() => onAddToCart(p)}
-                        className="btn btn-primary"
-                        style={{ width: '100%', gap: '0.5rem', opacity: p.availability <= 0 ? 0.6 : 1, cursor: p.availability <= 0 ? 'not-allowed' : 'pointer' }}
-                      >
-                        <ShoppingCart size={16} /> {p.availability > 0 ? 'Thêm Vào Giỏ' : 'Hết Hàng'}
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                        <button 
+                          disabled={p.availability <= 0}
+                          onClick={() => onAddToCart(p)}
+                          className="btn btn-secondary"
+                          style={{ 
+                            flex: 1,
+                            borderRadius: '8px',
+                            padding: '0.6rem 0.5rem',
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.25rem',
+                            border: '1px solid var(--border-color)',
+                            opacity: p.availability <= 0 ? 0.6 : 1,
+                            cursor: p.availability <= 0 ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          <ShoppingCart size={14} /> Thêm Giỏ
+                        </button>
+                        
+                        <button 
+                          disabled={p.availability <= 0}
+                          onClick={() => onBuyNow(p)}
+                          className="btn btn-primary"
+                          style={{ 
+                            flex: 1,
+                            borderRadius: '8px',
+                            padding: '0.6rem 0.5rem',
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.25rem',
+                            opacity: p.availability <= 0 ? 0.6 : 1,
+                            cursor: p.availability <= 0 ? 'not-allowed' : 'pointer',
+                            background: p.availability > 0 ? 'var(--accent-primary)' : 'var(--text-muted)',
+                            border: 'none'
+                          }}
+                        >
+                          💳 Mua Ngay
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

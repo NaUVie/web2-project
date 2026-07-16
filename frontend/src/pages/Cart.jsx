@@ -1,12 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, ArrowRight, ShoppingBag } from 'lucide-react';
 
 export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, openAuthModal }) {
   const navigate = useNavigate();
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  // Select all items in cart by default on mount or when cart size changes
+  useEffect(() => {
+    setSelectedIds(cart.map(item => item.product.id));
+  }, [cart.length]);
+
+  const handleToggleSelect = (productId) => {
+    setSelectedIds(prev => 
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const isAllSelected = cart.length > 0 && selectedIds.length === cart.length;
+
+  const handleToggleAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(cart.map(item => item.product.id));
+    }
+  };
+
+  const getSelectedItems = () => {
+    return cart.filter(item => selectedIds.includes(item.product.id));
+  };
 
   const getSubtotal = () => {
-    return cart.reduce((total, item) => {
+    return getSelectedItems().reduce((total, item) => {
       const price = item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price);
       return total + (price * item.quantity);
     }, 0);
@@ -17,11 +45,17 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
       alert('Vui lòng đăng nhập trước khi tiến hành thanh toán.');
       openAuthModal();
     } else {
-      navigate('/checkout');
+      const selectedItems = getSelectedItems();
+      if (selectedItems.length === 0) {
+        alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
+        return;
+      }
+      navigate('/checkout', { state: { checkoutItems: selectedItems } });
     }
   };
 
   const subtotal = getSubtotal();
+  const selectedCount = getSelectedItems().reduce((total, item) => total + item.quantity, 0);
 
   return (
     <div className="container animate-fade-in" style={{ padding: '2rem 0 4rem 0', textAlign: 'left' }}>
@@ -56,8 +90,33 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
           
           {/* Cart list items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Select All Bar */}
+            <div className="glass-panel" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              fontWeight: 600
+            }}>
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                onChange={handleToggleAll}
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  accentColor: 'var(--accent-primary)',
+                  cursor: 'pointer'
+                }}
+              />
+              <span>Chọn tất cả ({cart.length} sản phẩm)</span>
+            </div>
+
             {cart.map(item => {
               const actualPrice = item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price);
+              const isSelected = selectedIds.includes(item.product.id);
               return (
                 <div 
                   key={item.product.id}
@@ -67,9 +126,22 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
                     alignItems: 'center',
                     gap: '1rem',
                     padding: '1rem',
-                    borderRadius: '12px'
+                    borderRadius: '12px',
+                    opacity: isSelected ? 1 : 0.65,
+                    transition: 'opacity 0.2s ease'
                   }}
                 >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => handleToggleSelect(item.product.id)}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      accentColor: 'var(--accent-primary)',
+                      cursor: 'pointer'
+                    }}
+                  />
                   <img 
                     src={item.product.imageUrl} 
                     alt={item.product.productName} 
@@ -153,7 +225,7 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
               <span>Tổng số lượng:</span>
-              <strong>{cart.reduce((total, item) => total + item.quantity, 0)} cái</strong>
+              <strong>{selectedCount} cái</strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, Truck, CheckCircle2 } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function Checkout({ cart, user, onClearCart }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const checkoutItems = location.state?.checkoutItems || cart;
 
   // Shipping details form
   const [fullName, setFullName] = useState('');
@@ -41,7 +43,7 @@ export default function Checkout({ cart, user, onClearCart }) {
   };
 
   const getSubtotal = () => {
-    return cart.reduce((total, item) => {
+    return checkoutItems.reduce((total, item) => {
       const price = item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price);
       return total + (price * item.quantity);
     }, 0);
@@ -72,11 +74,13 @@ export default function Checkout({ cart, user, onClearCart }) {
         phoneNumber: phoneNumber.trim(),
         shippingAddress: shippingAddress.trim(),
         paymentMethod: paymentMethod,
-        returnUrl: window.location.origin + '/payment-result'
+        returnUrl: window.location.origin + '/payment-result',
+        productIds: checkoutItems.map(item => item.product.id).join(',')
       };
 
-      const response = await api.placeOrder(user.userId, cart, shippingPayload);
+      const response = await api.placeOrder(user.userId, checkoutItems, shippingPayload);
       if (response.paymentUrl) {
+        localStorage.setItem('nexus_checkout_items', JSON.stringify(checkoutItems.map(item => item.product.id)));
         window.location.href = response.paymentUrl;
         return;
       }
@@ -84,7 +88,7 @@ export default function Checkout({ cart, user, onClearCart }) {
       const resultOrder = response.order;
       setPlacedOrderId(resultOrder.id);
       setOrderSuccess(true);
-      onClearCart();
+      onClearCart(checkoutItems.map(item => item.product.id));
     } catch (err) {
       setErrorMsg(err.message || 'Lỗi hệ thống khi thanh toán đơn hàng');
     } finally {
@@ -131,7 +135,7 @@ export default function Checkout({ cart, user, onClearCart }) {
 
           <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
             <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => navigate('/shop')}>Tiếp tục mua sắm</button>
-            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate('/profile')}>Xem đơn hàng</button>
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate('/profile?tab=orders')}>Xem đơn hàng</button>
           </div>
         </div>
       </div>
@@ -139,7 +143,7 @@ export default function Checkout({ cart, user, onClearCart }) {
   }
 
   // If cart is empty and page was refreshed
-  if (cart.length === 0) {
+  if (checkoutItems.length === 0) {
     return (
       <div className="container" style={{ padding: '4rem 0' }}>
         <div className="glass-panel" style={{ padding: '3rem', borderRadius: '12px', textAlign: 'center' }}>
@@ -288,7 +292,7 @@ export default function Checkout({ cart, user, onClearCart }) {
           
           {/* List items mini preview */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '200px', overflowY: 'auto', paddingRight: '0.25rem' }}>
-            {cart.map(item => (
+            {checkoutItems.map(item => (
               <div key={item.product.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                 <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
                   {item.product.productName} <strong style={{ color: 'var(--text-primary)' }}>x{item.quantity}</strong>

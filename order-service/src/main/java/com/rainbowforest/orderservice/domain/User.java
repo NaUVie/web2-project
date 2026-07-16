@@ -20,6 +20,17 @@ public class User {
     @JsonIgnore
     private List<Order> orders;
 
+    @Transient
+    private java.util.Map<String, Object> userDetails;
+
+    public java.util.Map<String, Object> getUserDetails() {
+        return userDetails;
+    }
+
+    public void setUserDetails(java.util.Map<String, Object> userDetails) {
+        this.userDetails = userDetails;
+    }
+
     public Long getId() {
         return id;
     }

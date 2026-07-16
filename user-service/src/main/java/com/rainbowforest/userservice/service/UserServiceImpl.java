@@ -95,6 +95,7 @@ public class UserServiceImpl implements UserService {
                 }
                 existingDetails.setFirstName(updatedDetails.getFirstName());
                 existingDetails.setLastName(updatedDetails.getLastName());
+                existingDetails.setEmail(updatedDetails.getEmail());
                 existingDetails.setPhoneNumber(updatedDetails.getPhoneNumber());
                 existingDetails.setStreet(updatedDetails.getStreet());
                 existingDetails.setStreetNumber(updatedDetails.getStreetNumber());

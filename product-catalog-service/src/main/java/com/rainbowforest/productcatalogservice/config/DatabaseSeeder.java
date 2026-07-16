@@ -98,106 +98,105 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         // 5. Seed Products
-        // Clear all products first to force updating to VND prices
         productRepository.deleteAll();
 
-        if (productRepository.count() == 0) {
-            Product p1 = new Product();
-            p1.setProductName("MacBook Pro M3 Max");
-            p1.setPrice(new BigDecimal("60000000"));
-            p1.setPromoPrice(new BigDecimal("55000000"));
-            p1.setDiscription("Apple M3 Max chip with 16-core CPU and 40-core GPU, 48GB Unified Memory, 1TB SSD storage.");
-            p1.setCategory("Electronics");
-            p1.setAvailability(10);
-            p1.setImageUrl("https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&auto=format&fit=crop&q=60");
+        // Electronics (6 products)
+        seedProduct("MacBook Pro M3 Max", "60000000", "55000000",
+                "Apple M3 Max chip with 16-core CPU and 40-core GPU, 48GB Unified Memory, 1TB SSD storage.",
+                "Electronics", 10, "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&auto=format&fit=crop&q=60");
+        seedProduct("iPhone 15 Pro", "25000000", "22000000",
+                "Titanium design, A17 Pro chip, customizable Action button, and a powerful 3x Telephoto camera.",
+                "Electronics", 25, "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500&auto=format&fit=crop&q=60");
+        seedProduct("UltraWide Gaming Monitor 34\"", "12000000", "10500000",
+                "34-inch curved gaming monitor, 144Hz refresh rate, 1ms response time, HDR10 support, and AMD FreeSync Premium.",
+                "Electronics", 8, "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=60");
+        seedProduct("iPad Pro M4", "28000000", "26500000",
+                "Siêu mỏng nhẹ, màn hình OLED Tandem đột phá, chip Apple M4 cực khủng cho hiệu năng xử lý đồ họa chuyên nghiệp.",
+                "Electronics", 15, "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&auto=format&fit=crop&q=60");
+        seedProduct("ASUS ROG Ally X", "23000000", "21900000",
+                "Máy chơi game cầm tay chạy Windows tốt nhất thế giới, trang bị chip AMD Ryzen Z1 Extreme, dung lượng pin tăng gấp đôi.",
+                "Electronics", 12, "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Samsung Galaxy S24 Ultra", "30000000", "27000000",
+                "Điện thoại Android cao cấp nhất với camera 200MP, khung viền Titanium bền bỉ cùng bút S-Pen đa năng và AI thông minh.",
+                "Electronics", 20, "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&auto=format&fit=crop&q=60");
 
-            Product p2 = new Product();
-            p2.setProductName("iPhone 15 Pro");
-            p2.setPrice(new BigDecimal("25000000"));
-            p2.setPromoPrice(new BigDecimal("22000000"));
-            p2.setDiscription("Titanium design, A17 Pro chip, customizable Action button, and a powerful 3x Telephoto camera.");
-            p2.setCategory("Electronics");
-            p2.setAvailability(25);
-            p2.setImageUrl("https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500&auto=format&fit=crop&q=60");
+        // Audio (5 products)
+        seedProduct("Sony WH-1000XM5", "8500000", null,
+                "Industry leading wireless noise cancelling headphones with Auto NC Optimizer, crystal clear hands-free calling.",
+                "Audio", 15, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60");
+        seedProduct("AirPods Pro 2", "6000000", "5300000",
+                "Tai nghe True Wireless cao cấp của Apple, chống ồn chủ động ANC tốt gấp 2 lần, thời lượng pin tối ưu và hộp sạc tìm kiếm.",
+                "Audio", 35, "https://images.unsplash.com/photo-1588449668365-d15e397f6787?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Marshall Acton III", "7500000", "6800000",
+                "Loa Bluetooth gia đình mang thiết kế cổ điển sang trọng, chất âm chi tiết sống động, hỗ trợ cổng cắm 3.5mm linh hoạt.",
+                "Audio", 10, "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&auto=format&fit=crop&q=60");
+        seedProduct("JBL Charge 5", "4000000", "3600000",
+                "Loa di động kháng nước chống bụi IP67, chất âm Bass sâu trầm uy lực, tích hợp cổng sạc dự phòng cho điện thoại.",
+                "Audio", 25, "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Sennheiser Momentum 4", "9500000", "8900000",
+                "Tai nghe chụp tai hi-end với chất lượng âm thanh đỉnh cấp, thời lượng pin kỷ lục lên đến 60 giờ nghe nhạc liên tục.",
+                "Audio", 8, "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&auto=format&fit=crop&q=60");
 
-            Product p3 = new Product();
-            p3.setProductName("Sony WH-1000XM5");
-            p3.setPrice(new BigDecimal("8500000"));
-            p3.setPromoPrice(null);
-            p3.setDiscription("Industry leading wireless noise cancelling headphones with Auto NC Optimizer, crystal clear hands-free calling.");
-            p3.setCategory("Audio");
-            p3.setAvailability(15);
-            p3.setImageUrl("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60");
+        // Footwear (5 products)
+        seedProduct("Nike Air Max 270", "3500000", "2800000",
+                "Nike's first lifestyle Air Max brings you style, comfort and big attitude. Features a large Air unit.",
+                "Footwear", 30, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Adidas Ultraboost Light", "5000000", "4200000",
+                "Giày chạy bộ quốc dân thế hệ mới siêu nhẹ, đệm Boost phản hồi lực cực tốt giúp bảo vệ bàn chân và tối ưu lực chạy.",
+                "Footwear", 18, "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Nike Air Jordan 1 Low", "4500000", null,
+                "Đôi giày bóng rổ đường phố mang tính biểu tượng mọi thời đại, phối màu cá tính dễ dàng phối với mọi trang phục.",
+                "Footwear", 15, "https://images.unsplash.com/photo-1597045566677-8cf032ed6634?w=500&auto=format&fit=crop&q=60");
+        seedProduct("New Balance 550", "3800000", "3400000",
+                "Đôi sneaker thời thượng mang cảm hứng retro thập niên 90, chất liệu da cao cấp và kiểu dáng vintage độc đáo.",
+                "Footwear", 22, "https://images.unsplash.com/photo-1539185441755-769473a23570?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Puma Palermo Leather", "2800000", "2400000",
+                "Thiết kế cổ điển lấy cảm hứng từ các sân cỏ nước Ý, chất liệu da lộn mềm mại cùng màu sắc vintage tinh tế.",
+                "Footwear", 14, "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&auto=format&fit=crop&q=60");
 
-            Product p4 = new Product();
-            p4.setProductName("Nike Air Max 270");
-            p4.setPrice(new BigDecimal("3500000"));
-            p4.setPromoPrice(new BigDecimal("2800000"));
-            p4.setDiscription("Nike's first lifestyle Air Max brings you style, comfort and big attitude. Features a large Air unit.");
-            p4.setCategory("Footwear");
-            p4.setAvailability(30);
-            p4.setImageUrl("https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60");
+        // Accessories (5 products)
+        seedProduct("Mechanical Keyboard GMMK 2", "2800000", null,
+                "Custom compact mechanical keyboard, hot-swappable switches, linear Fox switches, aluminum top frame.",
+                "Accessories", 40, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Logitech MX Master 3S", "3000000", "2600000",
+                "Chuột văn phòng/đồ họa cao cấp nhất, mắt đọc 8K DPI siêu chính xác trên mọi bề mặt, bánh xe cuộn MagSpeed siêu tốc.",
+                "Accessories", 25, "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Elgato Stream Deck MK.2", "4200000", "3900000",
+                "Bàn phím điều khiển gồm 15 phím LCD có thể tùy chỉnh tính năng và hình ảnh hiển thị, thiết bị hoàn hảo cho streamer.",
+                "Accessories", 12, "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=60");
+        seedProduct("SteelSeries Arena 3", "3900000", "3500000",
+                "Hệ thống loa gaming 2.0 mang âm trường rộng mở, tái tạo âm thanh vòm sống động và rõ ràng giúp tối ưu trải nghiệm game.",
+                "Accessories", 15, "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&auto=format&fit=crop&q=60");
+        seedProduct("Anker Prime 100W GaN", "1800000", "1500000",
+                "Củ sạc công nghệ GaN Prime sạc siêu nhanh công suất 100W nhỏ gọn nhất, có 3 cổng ra sạc đồng thời cho laptop/điện thoại.",
+                "Accessories", 50, "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&auto=format&fit=crop&q=60");
 
-            Product p5 = new Product();
-            p5.setProductName("Mechanical Keyboard GMMK 2");
-            p5.setPrice(new BigDecimal("2800000"));
-            p5.setPromoPrice(null);
-            p5.setDiscription("Custom compact mechanical keyboard, hot-swappable switches, linear Fox switches, aluminum top frame.");
-            p5.setCategory("Accessories");
-            p5.setAvailability(40);
-            p5.setImageUrl("https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60");
-
-            Product p6 = new Product();
-            p6.setProductName("UltraWide Gaming Monitor 34\"");
-            p6.setPrice(new BigDecimal("12000000"));
-            p6.setPromoPrice(new BigDecimal("10500000"));
-            p6.setDiscription("34-inch curved gaming monitor, 144Hz refresh rate, 1ms response time, HDR10 support, and AMD FreeSync Premium.");
-            p6.setCategory("Electronics");
-            p6.setAvailability(8);
-            p6.setImageUrl("https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=60");
-
-            productRepository.saveAll(Arrays.asList(p1, p2, p3, p4, p5, p6));
-        }
-
-        // Seed and update gaming controllers from Sony, Flydigi, Gamesir
-        updateOrSaveController("Sony DualSense Wireless Controller PS5", "1700000", "1500000",
+        // Tay cầm (6 products)
+        seedProduct("Sony DualSense Wireless Controller PS5", "1700000", "1500000",
                 "Tay cầm chơi game không dây Sony DualSense cho máy PS5, tích hợp công nghệ phản hồi rung Haptic Feedback và cò nhấn thích ứng Adaptive Triggers.",
                 "Tay cầm", 20, "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500&auto=format&fit=crop&q=60");
-
-        updateOrSaveController("Sony DualSense Edge Wireless Controller", "5000000", "4700000",
+        seedProduct("Sony DualSense Edge Wireless Controller", "5000000", "4700000",
                 "Tay cầm chơi game chuyên nghiệp cao cấp nhất của Sony cho PS5/PC. Cho phép thay đổi cần analog, gán nút phụ phía sau lưng, tùy chỉnh hành trình cò nhấn.",
                 "Tay cầm", 5, "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=500&auto=format&fit=crop&q=60");
-
-        updateOrSaveController("Flydigi Apex 4 Wireless Controller", "3200000", "2900000",
+        seedProduct("Flydigi Apex 4 Wireless Controller", "3200000", "2900000",
                 "Tay cầm chơi game đỉnh cao của Flydigi với nút nhấn micro-switch cơ học lực ấn nhẹ, màn hình LED hiển thị thông tin, cần xoay lực phản hồi cơ học Force Feedback độc đáo.",
                 "Tay cầm", 15, "https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=500&auto=format&fit=crop&q=60");
-
-        updateOrSaveController("Flydigi Vader 3 Pro", "1400000", "1200000",
-                "Tay cầm chơi game hỗ trợ kết nối đa nền tảng PC/Switch/Android/iOS. Tần số phản hồi 1000Hz, cảm biến Hall Effect Hall Joystick chống trôi, nút bấm cơ học bấm cực nảy.",
+        seedProduct("Flydigi Vader 3 Pro", "1400000", "1200000",
+                "Tay cầm chơi game hỗ trợ kết nối đa nền tảng PC/Switch/Android/iOS. Tần số phản hồi 1000Hz, cảm biến Hall Effect Joystick chống trôi, nút bấm cơ học cực nảy.",
                 "Tay cầm", 30, "https://images.unsplash.com/photo-1593118247619-e2d6f056869e?w=500&auto=format&fit=crop&q=60");
-
-        updateOrSaveController("Gamesir G8 Galileo Type-C Mobile Controller", "2000000", "1700000",
-                "Tay cầm chơi game chuyên nghiệp dành cho điện thoại iPhone 15 series và Android. Thiết kế công thái học ôm tay, cần gạt Hall Effect, cổng sạc Type-C trực tiếp giảm độ trễ tối đa.",
+        seedProduct("Gamesir G8 Galileo Type-C Mobile Controller", "2000000", "1700000",
+                "Tay cầm chơi game chuyên nghiệp dành cho điện thoại iPhone 15 và Android. Thiết kế công thái học ôm tay, cần gạt Hall Effect, cổng sạc Type-C trực tiếp.",
                 "Tay cầm", 25, "https://images.unsplash.com/photo-1600861195091-690c92f1d2cc?w=500&auto=format&fit=crop&q=60");
-
-        updateOrSaveController("Gamesir T4 Cyclone Pro", "1200000", "1000000",
-                "Tay cầm chơi game không dây hỗ trợ PC, Switch, Android, iOS. Sử dụng nút bấm cơ học, cảm biến Hall Effect Joystick, con quay hồi chuyển 6 trục hỗ trợ ngắm bắn chính xác.",
+        seedProduct("Gamesir T4 Cyclone Pro", "1200000", "1000000",
+                "Tay cầm chơi game không dây hỗ trợ PC, Switch, Android, iOS. Sử dụng nút bấm cơ học, cảm biến Hall Effect Joystick, con quay hồi chuyển 6 trục hỗ trợ ngắm bắn.",
                 "Tay cầm", 40, "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=60");
 
-        System.out.println("======> Seeded and updated game controllers.");
+        System.out.println("======> Seeded and updated all products successfully.");
     }
 
-    private void updateOrSaveController(String name, String price, String promoPrice, String desc, String category, int availability, String imageUrl) {
-        java.util.List<Product> existing = productRepository.findAll().stream()
-                .filter(p -> p.getProductName().equalsIgnoreCase(name))
-                .collect(java.util.stream.Collectors.toList());
-        Product product;
-        if (!existing.isEmpty()) {
-            product = existing.get(0);
-        } else {
-            product = new Product();
-            product.setProductName(name);
-        }
+    private void seedProduct(String name, String price, String promoPrice, String desc, String category, int availability, String imageUrl) {
+        Product product = new Product();
+        product.setProductName(name);
         product.setPrice(new BigDecimal(price));
         product.setPromoPrice(promoPrice != null ? new BigDecimal(promoPrice) : null);
         product.setDiscription(desc);

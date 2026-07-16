@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Check, AlertTriangle } from 'lucide-react';
 import { api } from '../utils/api';
 
-export default function ProductDetail({ onAddToCart }) {
+export default function ProductDetail({ onAddToCart, onBuyNow }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -193,10 +193,19 @@ export default function ProductDetail({ onAddToCart }) {
               {/* Add to cart */}
               <button 
                 onClick={handleAddToCart}
-                className="btn btn-primary"
-                style={{ height: '46px', padding: '0 2rem', borderRadius: '8px', flex: 1, minWidth: '180px' }}
+                className="btn btn-secondary"
+                style={{ height: '46px', padding: '0 1.5rem', borderRadius: '8px', flex: 1, minWidth: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', border: '1px solid var(--border-color)' }}
               >
-                <ShoppingCart size={18} /> Thêm Vào Giỏ Hàng
+                <ShoppingCart size={18} /> Thêm Vào Giỏ
+              </button>
+
+              {/* Buy now */}
+              <button 
+                onClick={() => onBuyNow(product, quantity)}
+                className="btn btn-primary"
+                style={{ height: '46px', padding: '0 1.5rem', borderRadius: '8px', flex: 1, minWidth: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                💳 Mua Ngay
               </button>
             </div>
           )}
@@ -273,15 +282,50 @@ export default function ProductDetail({ onAddToCart }) {
                       <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--accent-primary)' }}>{parseFloat(p.price).toLocaleString('vi-VN')} đ</span>
                     )}
                   </div>
-
-                  <button 
-                    disabled={p.availability <= 0}
-                    onClick={() => onAddToCart(p)}
-                    className="btn btn-primary"
-                    style={{ width: '100%', gap: '0.5rem', opacity: p.availability <= 0 ? 0.6 : 1, cursor: p.availability <= 0 ? 'not-allowed' : 'pointer' }}
-                  >
-                    <ShoppingCart size={16} /> {p.availability > 0 ? 'Thêm Vào Giỏ' : 'Hết Hàng'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                    <button 
+                      disabled={p.availability <= 0}
+                      onClick={() => onAddToCart(p)}
+                      className="btn btn-secondary"
+                      style={{ 
+                        flex: 1,
+                        borderRadius: '8px',
+                        padding: '0.6rem 0.5rem',
+                        fontSize: '0.8rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.25rem',
+                        border: '1px solid var(--border-color)',
+                        opacity: p.availability <= 0 ? 0.6 : 1,
+                        cursor: p.availability <= 0 ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <ShoppingCart size={14} /> Thêm Giỏ
+                    </button>
+                    
+                    <button 
+                      disabled={p.availability <= 0}
+                      onClick={() => onBuyNow(p)}
+                      className="btn btn-primary"
+                      style={{ 
+                        flex: 1,
+                        borderRadius: '8px',
+                        padding: '0.6rem 0.5rem',
+                        fontSize: '0.8rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.25rem',
+                        opacity: p.availability <= 0 ? 0.6 : 1,
+                        cursor: p.availability <= 0 ? 'not-allowed' : 'pointer',
+                        background: p.availability > 0 ? 'var(--accent-primary)' : 'var(--text-muted)',
+                        border: 'none'
+                      }}
+                    >
+                      💳 Mua Ngay
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

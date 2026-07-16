@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
@@ -33,15 +33,24 @@ function AppContent({
   handleUpdateQuantity,
   handleRemoveFromCart,
   handleClearCart,
-  handleBuyNow,
   handleLoginSuccess,
   handleLogout,
   toggleTheme,
   cartCount
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
   // Check if current page is admin dashboard (/admin) or admin login (/admin/login)
   const isAdminRoute = location.pathname.startsWith('/admin');
+
+  const handleBuyNow = (product, quantity = 1) => {
+    handleAddToCart(product, quantity);
+    if (!user) {
+      navigate('/login');
+    } else {
+      navigate('/checkout', { state: { checkoutItems: [{ product, quantity }] } });
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -61,9 +70,9 @@ function AppContent({
       {/* Main Content Area */}
       <main style={{ flex: 1 }}>
         <Routes>
-          <Route path="/" element={<Home onAddToCart={handleAddToCart} />} />
-          <Route path="/shop" element={<Shop onAddToCart={handleAddToCart} />} />
-          <Route path="/product/:id" element={<ProductDetail onAddToCart={handleAddToCart} />} />
+          <Route path="/" element={<Home onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />} />
+          <Route path="/shop" element={<Shop onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />} />
+          <Route path="/product/:id" element={<ProductDetail onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />} />
           <Route path="/cart" element={<Cart cart={cart} onUpdateQuantity={handleUpdateQuantity} onRemoveFromCart={handleRemoveFromCart} user={user} openAuthModal={() => window.location.href = '/login'} />} />
           <Route path="/checkout" element={<Checkout cart={cart} user={user} onClearCart={handleClearCart} />} />
           <Route path="/payment-result" element={<PaymentResult onClearCart={handleClearCart} />} />
@@ -176,17 +185,16 @@ function App() {
     });
   };
 
-  const handleClearCart = () => {
-    setCart([]);
-    localStorage.removeItem('nexus_cart');
-  };
-
-  const handleBuyNow = (product) => {
-    handleAddToCart(product, 1);
-    if (!user) {
-      window.location.href = '/login';
+  const handleClearCart = (productIdsToClear = null) => {
+    if (productIdsToClear && Array.isArray(productIdsToClear)) {
+      setCart(prevCart => {
+        const updatedCart = prevCart.filter(item => !productIdsToClear.includes(item.product.id));
+        localStorage.setItem('nexus_cart', JSON.stringify(updatedCart));
+        return updatedCart;
+      });
     } else {
-      window.location.href = '/checkout';
+      setCart([]);
+      localStorage.removeItem('nexus_cart');
     }
   };
 
@@ -227,7 +235,6 @@ function App() {
         handleUpdateQuantity={handleUpdateQuantity}
         handleRemoveFromCart={handleRemoveFromCart}
         handleClearCart={handleClearCart}
-        handleBuyNow={handleBuyNow}
         handleLoginSuccess={handleLoginSuccess}
         handleLogout={handleLogout}
         toggleTheme={toggleTheme}

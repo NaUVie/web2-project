@@ -61,7 +61,7 @@ export default function Chatbot({ onAddToCart, onBuyNow }) {
     return allProducts.filter(p => {
       const name = p.productName.toLowerCase();
       const desc = p.discription.toLowerCase();
-      const cat = p.category.toLowerCase();
+      const cat = p.category ? p.category.toLowerCase() : '';
       
       if (lowerText.includes('macbook') || lowerText.includes('laptop') || lowerText.includes('máy tính')) {
         return name.includes('macbook');
@@ -70,16 +70,19 @@ export default function Chatbot({ onAddToCart, onBuyNow }) {
         return name.includes('iphone');
       }
       if (lowerText.includes('tai nghe') || lowerText.includes('loa') || lowerText.includes('sound') || lowerText.includes('audio')) {
-        return cat.includes('audio') || name.includes('sony');
+        return cat.includes('audio') || name.includes('sony') || name.includes('wh-1000xm5');
       }
       if (lowerText.includes('giày') || lowerText.includes('nike') || lowerText.includes('sneaker') || lowerText.includes('shoes')) {
-        return cat.includes('footwear');
+        return cat.includes('footwear') || name.includes('nike');
       }
       if (lowerText.includes('bàn phím') || lowerText.includes('keyboard')) {
         return name.includes('keyboard') || name.includes('gmmk');
       }
       if (lowerText.includes('màn hình') || lowerText.includes('monitor')) {
         return name.includes('monitor') || name.includes('gaming');
+      }
+      if (lowerText.includes('tay cầm') || lowerText.includes('controller') || lowerText.includes('gamepad') || lowerText.includes('playstation') || lowerText.includes('ps5')) {
+        return cat.includes('tay cầm') || name.includes('controller') || name.includes('dualsense') || name.includes('flydigi') || name.includes('gamesir');
       }
       return name.includes(lowerText) || desc.includes(lowerText);
     }).slice(0, 2); // Show max 2 matching products
@@ -88,7 +91,7 @@ export default function Chatbot({ onAddToCart, onBuyNow }) {
   // Predefined smart fallback responses
   const getFallbackResponse = (userInput) => {
     const text = userInput.toLowerCase();
-    let reply = 'Tôi hiểu bạn đang hỏi về shop. Là trợ lý của Nexus Shop, tôi xin thông tin thêm là cửa hàng chuyên bán Laptop, Điện thoại, Tai nghe chống ồn, Giày thể thao, Màn hình gaming và Bàn phím cơ cao cấp. Bạn cần tư vấn chi tiết dòng nào ạ?';
+    let reply = 'Tôi hiểu bạn đang hỏi về shop. Là trợ lý của Nexus Shop, tôi xin thông tin thêm là cửa hàng chuyên bán Laptop, Điện thoại, Tai nghe chống ồn, Giày thể thao, Màn hình gaming, Bàn phím cơ và các loại Tay cầm chơi game cao cấp. Bạn cần tư vấn chi tiết dòng nào ạ?';
     
     if (text.includes('xin chào') || text.includes('hi') || text.includes('hello')) {
       reply = 'Xin chào! Chúc bạn một ngày tốt lành. Tôi có thể giúp gì cho bạn trong việc tìm kiếm các sản phẩm công nghệ cao cấp tại Nexus Shop?';
@@ -100,6 +103,8 @@ export default function Chatbot({ onAddToCart, onBuyNow }) {
       reply = 'Tất cả sản phẩm điện tử tại Nexus Shop được bảo hành chính hãng 12 tháng. Bạn có quyền đổi trả sản phẩm lỗi nhà sản xuất trong vòng 7 ngày đầu kể từ khi nhận hàng.';
     } else if (text.includes('liên hệ') || text.includes('địa chỉ') || text.includes('sđt')) {
       reply = 'Bạn có thể ghé thăm shop trực tiếp tại địa chỉ: 123 Đường Ba Tháng Hai, Quận 10, TP.HCM. Sđt hỗ trợ: 1900 6789. Hoạt động từ 8h00 đến 21h00 hàng ngày.';
+    } else if (text.includes('tay cầm') || text.includes('gamepad') || text.includes('controller') || text.includes('ps5') || text.includes('dualsense') || text.includes('flydigi') || text.includes('gamesir')) {
+      reply = 'Chúng tôi có các mẫu tay cầm chơi game chính hãng sau: Sony DualSense (cho PS5), Sony DualSense Edge (phân khúc chuyên nghiệp cao cấp nhất), Flydigi Apex 4 (có màn hình LED hiển thị lực phẩn hồi), Flydigi Vader 3 Pro, Gamesir G8 Galileo và Gamesir T4 Cyclone Pro. Trong đó, sản phẩm tay cầm đắt nhất là Sony DualSense Edge Wireless Controller với giá 5.000.000đ.';
     } else {
       const matches = findMatchingProducts(userInput);
       if (matches.length > 0) {

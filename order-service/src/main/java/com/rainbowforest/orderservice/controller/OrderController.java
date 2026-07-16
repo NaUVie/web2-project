@@ -65,6 +65,21 @@ public class OrderController {
             return new ResponseEntity<>("Thanh toán thất bại: Giỏ hàng của bạn đang trống.", HttpStatus.BAD_REQUEST);
         }
 
+        if (payload != null && payload.containsKey("productIds") && payload.get("productIds") != null && !payload.get("productIds").trim().isEmpty()) {
+            String productIdsStr = payload.get("productIds");
+            List<Long> targetProductIds = java.util.Arrays.stream(productIdsStr.split(","))
+                    .map(String::trim)
+                    .map(Long::parseLong)
+                    .collect(java.util.stream.Collectors.toList());
+            cart = cart.stream()
+                    .filter(item -> targetProductIds.contains(item.getProduct().getId()))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        if (cart.isEmpty()) {
+            return new ResponseEntity<>("Thanh toán thất bại: Không tìm thấy sản phẩm được chọn trong giỏ hàng.", HttpStatus.BAD_REQUEST);
+        }
+
         User user = null;
         try {
             user = userClient.getUserById(userId);
@@ -86,7 +101,9 @@ public class OrderController {
 
         try {
             orderService.saveOrder(order);
-            cartService.deleteCart(activeCartId);
+            for (Item item : cart) {
+                cartService.deleteItemFromCart(activeCartId, item.getProduct().getId());
+            }
 
             // Publish event to Kafka
             try {
@@ -101,11 +118,19 @@ public class OrderController {
                             actualPrice
                     ));
                 }
+                String userEmail = user.getUserName() + "@gmail.com";
+                if (user.getUserDetails() != null && user.getUserDetails().containsKey("email")) {
+                    Object emailObj = user.getUserDetails().get("email");
+                    if (emailObj != null) {
+                        userEmail = emailObj.toString();
+                    }
+                }
+
                 OrderEvent event = new OrderEvent(
                         order.getId(),
                         user.getId(),
                         user.getUserName(),
-                        user.getUserName() + "@gmail.com",
+                        userEmail,
                         order.getTotal(),
                         order.getStatus(),
                         items

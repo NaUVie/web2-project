@@ -33,7 +33,22 @@ export default function PaymentResult({ onClearCart }) {
           setStatus('SUCCESS');
           setMessage('Thanh toán đơn hàng thành công qua cổng VNPAY!');
           if (onClearCart) {
-            onClearCart();
+            const checkoutItemsStr = localStorage.getItem('nexus_checkout_items');
+            if (checkoutItemsStr) {
+              try {
+                const productIds = JSON.parse(checkoutItemsStr);
+                if (Array.isArray(productIds)) {
+                  onClearCart(productIds);
+                } else {
+                  onClearCart();
+                }
+              } catch (e) {
+                onClearCart();
+              }
+              localStorage.removeItem('nexus_checkout_items');
+            } else {
+              onClearCart();
+            }
           }
         } else {
           setStatus('FAILED');
@@ -100,7 +115,7 @@ export default function PaymentResult({ onClearCart }) {
 
             <div style={{ display: 'flex', gap: '1rem', width: '100%', marginTop: '1rem' }}>
               <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => navigate('/shop')}>Tiếp tục mua sắm</button>
-              <button className="btn btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={() => navigate('/profile')}>
+              <button className="btn btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={() => navigate('/profile?tab=orders')}>
                 Xem đơn hàng <ArrowRight size={16} />
               </button>
             </div>
