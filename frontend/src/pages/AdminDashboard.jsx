@@ -220,7 +220,17 @@ export default function AdminDashboard({ user, openAuthModal }) {
   };
 
   const handleUpdateOrderStatus = async (orderId, newStatus, newPaymentStatus) => {
-    await api.updateOrderStatus(orderId, newStatus, newPaymentStatus).then(triggerRefresh).catch(e => alert(e.message));
+    try {
+      await api.updateOrderStatus(orderId, newStatus, newPaymentStatus);
+      triggerRefresh();
+      // Saga events are processed asynchronously via Kafka.
+      // We trigger a delayed refresh after 1 second to capture the updated inventory state.
+      setTimeout(() => {
+        triggerRefresh();
+      }, 1000);
+    } catch (e) {
+      alert(e.message);
+    }
   };
 
   const openViewOrderModal = (order) => {
