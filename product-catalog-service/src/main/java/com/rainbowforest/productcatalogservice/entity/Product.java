@@ -113,7 +113,7 @@ public class Product {
 	}
 
     public List<ProductVariant> getVariants() {
-        return variants;
+        return this.variants == null ? new ArrayList<>() : new ArrayList<>(this.variants);
     }
 
     public void setVariants(List<ProductVariant> variants) {
