@@ -1,6 +1,7 @@
 package com.rainbowforest.productcatalogservice.controller;
 
 import com.rainbowforest.productcatalogservice.entity.Product;
+import com.rainbowforest.productcatalogservice.entity.ProductVariant;
 import com.rainbowforest.productcatalogservice.http.header.HeaderGenerator;
 import com.rainbowforest.productcatalogservice.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,11 @@ public class ProductController {
     @PostMapping(value = "/products")
     public ResponseEntity<Product> addProduct(@RequestBody Product product) {
         try {
+            if (product.getVariants() != null) {
+                for (ProductVariant v : product.getVariants()) {
+                    v.setProduct(product);
+                }
+            }
             Product savedProduct = productService.addProduct(product);
             return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -79,6 +85,16 @@ public class ProductController {
         existingProduct.setAvailability(product.getAvailability());
         existingProduct.setImageUrl(product.getImageUrl());
         existingProduct.setPromoPrice(product.getPromoPrice());
+        
+        if (product.getVariants() != null) {
+            existingProduct.getVariants().clear();
+            for (ProductVariant v : product.getVariants()) {
+                v.setProduct(existingProduct);
+                existingProduct.getVariants().add(v);
+            }
+        } else {
+            existingProduct.getVariants().clear();
+        }
         
         Product savedProduct = productService.addProduct(existingProduct);
         return new ResponseEntity<>(savedProduct, HttpStatus.OK);

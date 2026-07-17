@@ -1,6 +1,7 @@
 package com.rainbowforest.productcatalogservice.controller;
 
 import com.rainbowforest.productcatalogservice.entity.Product;
+import com.rainbowforest.productcatalogservice.entity.ProductVariant;
 import com.rainbowforest.productcatalogservice.http.header.HeaderGenerator;
 import com.rainbowforest.productcatalogservice.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,11 @@ public class AdminProductController {
     private ResponseEntity<Product> addProduct(@RequestBody Product product, HttpServletRequest request){
     	if(product != null) {
     		try {
+                if (product.getVariants() != null) {
+                    for (ProductVariant v : product.getVariants()) {
+                        v.setProduct(product);
+                    }
+                }
     			productService.addProduct(product);
     	        return new ResponseEntity<Product>(
     	        		product,

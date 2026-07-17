@@ -25,7 +25,7 @@ export default function AdminDashboard({ user, openAuthModal }) {
   const [selectedEntity, setSelectedEntity] = useState(null);
 
   // Form inputs
-  const [prodForm, setProdForm] = useState({ productName: '', price: '', promoPrice: '', category: '', availability: 10, imageUrl: '', discription: '' });
+  const [prodForm, setProdForm] = useState({ productName: '', price: '', promoPrice: '', category: '', availability: 10, imageUrl: '', discription: '', variants: [] });
   const [catForm, setCatForm] = useState({ name: '', slug: '' });
   const [bcatForm, setBcatForm] = useState({ name: '', slug: '' });
   const [postForm, setPostForm] = useState({ title: '', content: '', coverImageUrl: '', categoryName: '' });
@@ -50,6 +50,25 @@ export default function AdminDashboard({ user, openAuthModal }) {
       } else if (formType === 'banner') {
         setBannerForm(prev => ({ ...prev, [fieldName]: data.url }));
       }
+    } catch (err) {
+      alert(err.message || 'Lỗi khi tải ảnh lên Cloudinary');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleVariantFileUpload = async (e, index) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const data = await api.uploadImage(file);
+      setProdForm(prev => {
+        const updatedVariants = [...prev.variants];
+        updatedVariants[index] = { ...updatedVariants[index], imageUrl: data.url };
+        return { ...prev, variants: updatedVariants };
+      });
     } catch (err) {
       alert(err.message || 'Lỗi khi tải ảnh lên Cloudinary');
     } finally {
@@ -103,7 +122,15 @@ export default function AdminDashboard({ user, openAuthModal }) {
         ...prodForm,
         price: parseFloat(prodForm.price),
         promoPrice: prodForm.promoPrice ? parseFloat(prodForm.promoPrice) : null,
-        availability: parseInt(prodForm.availability)
+        availability: parseInt(prodForm.availability),
+        variants: (prodForm.variants || []).map(v => ({
+          id: v.id || null,
+          color: v.color || '',
+          size: v.size || '',
+          price: v.price ? parseFloat(v.price) : null,
+          availability: v.availability ? parseInt(v.availability) : 0,
+          imageUrl: v.imageUrl || ''
+        }))
       };
 
       if (modalType === 'create-prod') {
@@ -245,7 +272,7 @@ export default function AdminDashboard({ user, openAuthModal }) {
   const openCreateModal = (type) => {
     setModalType(type);
     setSelectedEntity(null);
-    if (type === 'create-prod') setProdForm({ productName: '', price: '', promoPrice: '', category: categories[0]?.name || 'Electronics', availability: 10, imageUrl: '', discription: '' });
+    if (type === 'create-prod') setProdForm({ productName: '', price: '', promoPrice: '', category: categories[0]?.name || 'Electronics', availability: 10, imageUrl: '', discription: '', variants: [] });
     if (type === 'create-cat') setCatForm({ name: '', slug: '' });
     if (type === 'create-bcat') setBcatForm({ name: '', slug: '' });
     if (type === 'create-post') setPostForm({ title: '', content: '', coverImageUrl: '', categoryName: blogCategories[0]?.name || 'Technology News' });
@@ -256,7 +283,7 @@ export default function AdminDashboard({ user, openAuthModal }) {
   const openEditModal = (type, entity) => {
     setModalType(type);
     setSelectedEntity(entity);
-    if (type === 'edit-prod') setProdForm({ productName: entity.productName, price: entity.price, promoPrice: entity.promoPrice || '', category: entity.category, availability: entity.availability, imageUrl: entity.imageUrl, discription: entity.discription });
+    if (type === 'edit-prod') setProdForm({ productName: entity.productName, price: entity.price, promoPrice: entity.promoPrice || '', category: entity.category, availability: entity.availability, imageUrl: entity.imageUrl, discription: entity.discription, variants: entity.variants || [] });
     if (type === 'edit-cat') setCatForm({ name: entity.name, slug: entity.slug });
     if (type === 'edit-bcat') setBcatForm({ name: entity.name, slug: entity.slug });
     if (type === 'edit-post') setPostForm({ title: entity.title, content: entity.content, coverImageUrl: entity.coverImageUrl, categoryName: entity.categoryName });
@@ -1282,7 +1309,151 @@ export default function AdminDashboard({ user, openAuthModal }) {
                   <label className="form-label">Mô tả sản phẩm</label>
                   <textarea rows="3" className="form-input" value={prodForm.discription} onChange={(e) => setProdForm({ ...prodForm, discription: e.target.value })} style={{ resize: 'vertical' }} />
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', height: '42px' }}>Lưu dữ liệu</button>
+
+                {/* Product Variants Section */}
+                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--accent-primary)' }}>Phân Loại Sản Phẩm ({prodForm.variants?.length || 0})</h4>
+                    <button
+                      type="button"
+                      onClick={() => setProdForm(prev => ({
+                        ...prev,
+                        variants: [...(prev.variants || []), { color: '', size: '', price: '', availability: 10, imageUrl: '' }]
+                      }))}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', height: 'auto', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      <Plus size={14} /> Thêm phân loại
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {(!prodForm.variants || prodForm.variants.length === 0) ? (
+                      <div style={{ padding: '1rem', border: '1px dashed var(--border-color)', borderRadius: '8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        Chưa có phân loại nào. Sản phẩm này sẽ bán với thông tin giá gốc ở trên.
+                      </div>
+                    ) : (
+                      prodForm.variants.map((variant, index) => (
+                        <div key={index} style={{ border: '1px solid var(--border-color)', borderRadius: '10px', padding: '1rem', backgroundColor: 'var(--bg-tertiary)', position: 'relative' }}>
+                          
+                          {/* Close / Delete variant button */}
+                          <button
+                            type="button"
+                            onClick={() => setProdForm(prev => ({
+                              ...prev,
+                              variants: prev.variants.filter((_, i) => i !== index)
+                            }))}
+                            style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                            title="Xóa phân loại"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                            <div className="form-group" style={{ marginBottom: 0, textAlign: 'left' }}>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Màu sắc</label>
+                              <input
+                                type="text"
+                                className="form-input"
+                                style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
+                                placeholder="VD: Đỏ, Trắng..."
+                                value={variant.color}
+                                onChange={(e) => {
+                                  const updated = [...prodForm.variants];
+                                  updated[index].color = e.target.value;
+                                  setProdForm(prev => ({ ...prev, variants: updated }));
+                                }}
+                              />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0, textAlign: 'left' }}>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Kích thước</label>
+                              <input
+                                type="text"
+                                className="form-input"
+                                style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
+                                placeholder="VD: M, XL, 42..."
+                                value={variant.size}
+                                onChange={(e) => {
+                                  const updated = [...prodForm.variants];
+                                  updated[index].size = e.target.value;
+                                  setProdForm(prev => ({ ...prev, variants: updated }));
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                            <div className="form-group" style={{ marginBottom: 0, textAlign: 'left' }}>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Giá riêng (để trống nếu dùng giá gốc)</label>
+                              <input
+                                type="number"
+                                className="form-input"
+                                style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
+                                value={variant.price || ''}
+                                onChange={(e) => {
+                                  const updated = [...prodForm.variants];
+                                  updated[index].price = e.target.value;
+                                  setProdForm(prev => ({ ...prev, variants: updated }));
+                                }}
+                              />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0, textAlign: 'left' }}>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Số lượng có sẵn</label>
+                              <input
+                                type="number"
+                                className="form-input"
+                                style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
+                                value={variant.availability}
+                                onChange={(e) => {
+                                  const updated = [...prodForm.variants];
+                                  updated[index].availability = e.target.value;
+                                  setProdForm(prev => ({ ...prev, variants: updated }));
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-group" style={{ marginBottom: 0, textAlign: 'left' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Link hình ảnh phân loại</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
+                              value={variant.imageUrl || ''}
+                              onChange={(e) => {
+                                const updated = [...prodForm.variants];
+                                updated[index].imageUrl = e.target.value;
+                                  setProdForm(prev => ({ ...prev, variants: updated }));
+                                }}
+                              />
+                              <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleVariantFileUpload(e, index)}
+                                  style={{ display: 'none' }}
+                                  id={`variant-file-upload-${index}`}
+                                />
+                                <label
+                                  htmlFor={`variant-file-upload-${index}`}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.15rem 0.5rem', fontSize: '0.75rem', height: 'auto', cursor: 'pointer' }}
+                                >
+                                  {uploading ? 'Đang tải...' : 'Tải ảnh lên'}
+                                </label>
+                                {variant.imageUrl && (
+                                  <img src={variant.imageUrl} alt="Variant Preview" style={{ width: '30px', height: '30px', objectFit: 'cover', borderRadius: '4px', backgroundColor: 'white' }} />
+                                )}
+                              </div>
+                            </div>
+
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', height: '42px' }}>Lưu dữ liệu</button>
               </form>
             )}
 
