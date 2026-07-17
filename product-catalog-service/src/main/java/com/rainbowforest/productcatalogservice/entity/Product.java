@@ -41,7 +41,7 @@ public class Product {
     @Column (name = "promo_price")
     private BigDecimal promoPrice;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<ProductVariant> variants = new ArrayList<>();
 
 	public Product() {
