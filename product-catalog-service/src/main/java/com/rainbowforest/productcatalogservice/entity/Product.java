@@ -1,6 +1,8 @@
 package com.rainbowforest.productcatalogservice.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -42,6 +44,8 @@ public class Product {
     private BigDecimal promoPrice;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonSerialize(as = ArrayList.class)
+    @JsonDeserialize(as = ArrayList.class)
     private List<ProductVariant> variants = new ArrayList<>();
 
 	public Product() {
