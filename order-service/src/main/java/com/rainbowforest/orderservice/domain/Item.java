@@ -32,6 +32,12 @@ public class Item {
     @ManyToMany (mappedBy = "items")
     @JsonIgnore
     private List<Order> orders;
+
+    @Column (name = "color")
+    private String color;
+
+    @Column (name = "size")
+    private String size;
     
     public Item() {
     	
@@ -41,6 +47,14 @@ public class Item {
         this.quantity = quantity;
         this.product = product;
         this.subTotal = subTotal;
+    }
+
+    public Item(@NotNull int quantity, Product product, BigDecimal subTotal, String color, String size) {
+        this.quantity = quantity;
+        this.product = product;
+        this.subTotal = subTotal;
+        this.color = color;
+        this.size = size;
     }
 
 	public Long getId() {
@@ -81,5 +95,21 @@ public class Item {
 
 	public void setOrders(List<Order> orders) {
 		this.orders = orders;
+	}
+
+	public String getColor() {
+		return color;
+	}
+
+	public void setColor(String color) {
+		this.color = color;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size;
 	}
 }

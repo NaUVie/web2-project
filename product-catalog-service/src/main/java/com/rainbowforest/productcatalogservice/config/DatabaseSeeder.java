@@ -26,6 +26,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private AdvertisementRepository advertisementRepository;
 
+    @Autowired
+    private ProductVariantRepository productVariantRepository;
+
     @Override
     public void run(String... args) throws Exception {
         // 1. Seed Categories
@@ -98,6 +101,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         // 5. Seed Products
+        productVariantRepository.deleteAll();
         productRepository.deleteAll();
 
         // Electronics (6 products)
@@ -203,6 +207,22 @@ public class DatabaseSeeder implements CommandLineRunner {
         product.setCategory(category);
         product.setAvailability(availability);
         product.setImageUrl(imageUrl);
-        productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
+
+        // Add variants for specific items to show on UI
+        if ("Sony DualSense Wireless Controller PS5".equals(name)) {
+            productVariantRepository.save(new ProductVariant(savedProduct, "Trắng", null, null, 10, imageUrl));
+            productVariantRepository.save(new ProductVariant(savedProduct, "Đen", null, new BigDecimal("1550000"), 5, "https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=500&auto=format&fit=crop&q=60"));
+            productVariantRepository.save(new ProductVariant(savedProduct, "Đỏ Cosmic", null, new BigDecimal("1600000"), 5, "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500&auto=format&fit=crop&q=60"));
+        } else if ("Nike Air Max 270".equals(name)) {
+            productVariantRepository.save(new ProductVariant(savedProduct, "Đỏ", "40", null, 10, imageUrl));
+            productVariantRepository.save(new ProductVariant(savedProduct, "Đỏ", "41", null, 10, imageUrl));
+            productVariantRepository.save(new ProductVariant(savedProduct, "Xanh Dương", "40", null, 5, imageUrl));
+            productVariantRepository.save(new ProductVariant(savedProduct, "Xanh Dương", "42", null, 5, imageUrl));
+        } else if ("iPhone 15 Pro".equals(name)) {
+            productVariantRepository.save(new ProductVariant(savedProduct, "Titan Tự Nhiên", "128GB", null, 10, imageUrl));
+            productVariantRepository.save(new ProductVariant(savedProduct, "Titan Xanh", "256GB", new BigDecimal("25000000"), 8, imageUrl));
+            productVariantRepository.save(new ProductVariant(savedProduct, "Titan Đen", "128GB", null, 7, imageUrl));
+        }
     }
 }

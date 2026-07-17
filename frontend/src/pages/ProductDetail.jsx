@@ -12,6 +12,9 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
   const [loading, setLoading] = useState(true);
   const [addedAlert, setAddedAlert] = useState(false);
 
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+
   useEffect(() => {
     setLoading(true);
     api.getProductById(id)
@@ -31,11 +34,41 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Set default variants on product load
+  useEffect(() => {
+    if (product && product.variants && product.variants.length > 0) {
+      const colors = [...new Set(product.variants.map(v => v.color).filter(Boolean))];
+      const sizes = [...new Set(product.variants.map(v => v.size).filter(Boolean))];
+      if (colors.length > 0) setSelectedColor(colors[0]);
+      if (sizes.length > 0) setSelectedSize(sizes[0]);
+    } else {
+      setSelectedColor(null);
+      setSelectedSize(null);
+    }
+  }, [product]);
+
+  // Determine active variant
+  const activeVariant = product?.variants?.find(v => 
+    (selectedColor ? v.color === selectedColor : true) &&
+    (selectedSize ? v.size === selectedSize : true)
+  );
+
+  const displayPrice = activeVariant && activeVariant.price ? activeVariant.price : (product?.promoPrice || product?.price);
+  const hasPromoPrice = product?.promoPrice && !(activeVariant && activeVariant.price);
+  const displayAvailability = activeVariant ? activeVariant.availability : (product ? product.availability : 0);
+  const isAvailable = displayAvailability > 0;
+
   const handleAddToCart = () => {
     if (product) {
-      onAddToCart(product, quantity);
+      onAddToCart(product, quantity, selectedColor, selectedSize);
       setAddedAlert(true);
       setTimeout(() => setAddedAlert(false), 2000);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (product) {
+      onBuyNow(product, quantity, selectedColor, selectedSize);
     }
   };
 
@@ -55,7 +88,8 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
     );
   }
 
-  const isAvailable = product.availability > 0;
+  const colors = product.variants ? [...new Set(product.variants.map(v => v.color).filter(Boolean))] : [];
+  const sizes = product.variants ? [...new Set(product.variants.map(v => v.size).filter(Boolean))] : [];
 
   return (
     <div className="container animate-fade-in" style={{ padding: '2rem 0 4rem 0', textAlign: 'left' }}>
@@ -95,7 +129,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
             backgroundColor: 'white'
           }}>
             <img 
-              src={product.imageUrl} 
+              src={activeVariant?.imageUrl || product.imageUrl} 
               alt={product.productName} 
               style={{
                 maxWidth: '100%',
@@ -120,7 +154,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
           <div style={{ marginBottom: '1.5rem' }}>
             {isAvailable ? (
               <span className="badge badge-stock" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                <Check size={14} /> Còn hàng ({product.availability} sản phẩm)
+                <Check size={14} /> Còn hàng ({displayAvailability} sản phẩm)
               </span>
             ) : (
               <span className="badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -139,7 +173,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
             alignItems: 'center',
             gap: '1rem'
           }}>
-            {product.promoPrice ? (
+            {hasPromoPrice ? (
               <>
                 <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--accent-secondary)' }}>{parseFloat(product.promoPrice).toLocaleString('vi-VN')} đ</span>
                 <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{parseFloat(product.price).toLocaleString('vi-VN')} đ</span>
@@ -148,9 +182,71 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
                 </span>
               </>
             ) : (
-              <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>{parseFloat(product.price).toLocaleString('vi-VN')} đ</span>
+              <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>{parseFloat(displayPrice).toLocaleString('vi-VN')} đ</span>
             )}
           </div>
+
+          {/* Color Selector */}
+          {colors.length > 0 && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Chọn màu sắc:</h4>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {colors.map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      borderRadius: '8px',
+                      border: selectedColor === color ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                      backgroundColor: selectedColor === color ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-secondary)',
+                      color: selectedColor === color ? 'var(--accent-primary)' : 'var(--text-primary)',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sizes.length > 0 && (
+            <div style={{ marginBottom: '2rem' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Chọn kích thước / dung lượng:</h4>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {sizes.map(size => {
+                  const isAvailableForColor = product.variants?.some(v => 
+                    v.size === size && (selectedColor ? v.color === selectedColor : true) && v.availability > 0
+                  );
+                  return (
+                    <button
+                      key={size}
+                      disabled={!isAvailableForColor}
+                      onClick={() => setSelectedSize(size)}
+                      style={{
+                        padding: '0.5rem 1.25rem',
+                        borderRadius: '8px',
+                        border: selectedSize === size ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                        backgroundColor: selectedSize === size ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-secondary)',
+                        color: selectedSize === size ? 'var(--accent-primary)' : 'var(--text-primary)',
+                        cursor: isAvailableForColor ? 'pointer' : 'not-allowed',
+                        opacity: isAvailableForColor ? 1 : 0.5,
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div style={{ marginBottom: '2.5rem' }}>
@@ -183,7 +279,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
                   {quantity}
                 </span>
                 <button 
-                  onClick={() => setQuantity(q => Math.min(product.availability, q + 1))}
+                  onClick={() => setQuantity(q => Math.min(displayAvailability, q + 1))}
                   style={{ width: '40px', height: '100%', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 'bold' }}
                 >
                   +
@@ -201,7 +297,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
 
               {/* Buy now */}
               <button 
-                onClick={() => onBuyNow(product, quantity)}
+                onClick={handleBuyNow}
                 className="btn btn-primary"
                 style={{ height: '46px', padding: '0 1.5rem', borderRadius: '8px', flex: 1, minWidth: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
               >

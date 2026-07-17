@@ -982,8 +982,16 @@ export default function AdminDashboard({ user, openAuthModal }) {
                           {/* Items listed */}
                           <div style={{ backgroundColor: 'var(--bg-tertiary)', borderRadius: '8px', padding: '0.5rem 1rem' }}>
                             {ord.items && ord.items.map(it => (
-                              <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                                <span>{it.product?.productName} <strong>x{it.quantity}</strong></span>
+                              <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', alignItems: 'center' }}>
+                                <span>
+                                  {it.product?.productName}
+                                  {(it.color || it.size) && (
+                                    <span style={{ color: 'var(--accent-primary)', fontSize: '0.75rem', marginLeft: '0.5rem', fontWeight: 600 }}>
+                                      ({[it.color, it.size].filter(Boolean).join(' - ')})
+                                    </span>
+                                  )}
+                                  <strong> x{it.quantity}</strong>
+                                </span>
                                 <strong>{(it.product ? parseFloat(it.product.price) * it.quantity : 0).toLocaleString('vi-VN')} đ</strong>
                               </div>
                             ))}
@@ -1200,7 +1208,12 @@ export default function AdminDashboard({ user, openAuthModal }) {
                             )}
                             <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
                               <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{it.product?.productName}</span>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Đơn giá: {parseFloat(it.product?.price || 0).toLocaleString('vi-VN')} đ</span>
+                              {(it.color || it.size) && (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600, marginTop: '0.1rem' }}>
+                                  Phân loại: {[it.color, it.size].filter(Boolean).join(' - ')}
+                                </span>
+                              )}
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Đơn giá: {parseFloat(it.product?.price || 0).toLocaleString('vi-VN')} đ</span>
                             </div>
                           </div>
                           <div style={{ textAlign: 'right', fontSize: '0.85rem' }}>

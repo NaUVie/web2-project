@@ -6,16 +6,18 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState([]);
 
+  const getItemKey = (item) => `${item.product.id}-${item.selectedColor || ''}-${item.selectedSize || ''}`;
+
   // Select all items in cart by default on mount or when cart size changes
   useEffect(() => {
-    setSelectedIds(cart.map(item => item.product.id));
+    setSelectedIds(cart.map(getItemKey));
   }, [cart.length]);
 
-  const handleToggleSelect = (productId) => {
+  const handleToggleSelect = (itemKey) => {
     setSelectedIds(prev => 
-      prev.includes(productId)
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
+      prev.includes(itemKey)
+        ? prev.filter(id => id !== itemKey)
+        : [...prev, itemKey]
     );
   };
 
@@ -25,17 +27,27 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
     if (isAllSelected) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(cart.map(item => item.product.id));
+      setSelectedIds(cart.map(getItemKey));
     }
   };
 
   const getSelectedItems = () => {
-    return cart.filter(item => selectedIds.includes(item.product.id));
+    return cart.filter(item => selectedIds.includes(getItemKey(item)));
   };
 
   const getSubtotal = () => {
     return getSelectedItems().reduce((total, item) => {
-      const price = item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price);
+      // If variant has a specific price, use it. Otherwise use product's promo or base price.
+      let price = item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price);
+      if (item.selectedColor || item.selectedSize) {
+        const variant = item.product.variants?.find(v => 
+          (item.selectedColor ? v.color === item.selectedColor : true) &&
+          (item.selectedSize ? v.size === item.selectedSize : true)
+        );
+        if (variant && variant.price) {
+          price = parseFloat(variant.price);
+        }
+      }
       return total + (price * item.quantity);
     }, 0);
   };
@@ -115,11 +127,27 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
             </div>
 
             {cart.map(item => {
-              const actualPrice = item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price);
-              const isSelected = selectedIds.includes(item.product.id);
+              const itemKey = getItemKey(item);
+              const isSelected = selectedIds.includes(itemKey);
+
+              // Determine actual price
+              let actualPrice = item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price);
+              let displayImageUrl = item.product.imageUrl;
+
+              if (item.selectedColor || item.selectedSize) {
+                const variant = item.product.variants?.find(v => 
+                  (item.selectedColor ? v.color === item.selectedColor : true) &&
+                  (item.selectedSize ? v.size === item.selectedSize : true)
+                );
+                if (variant) {
+                  if (variant.price) actualPrice = parseFloat(variant.price);
+                  if (variant.imageUrl) displayImageUrl = variant.imageUrl;
+                }
+              }
+
               return (
                 <div 
-                  key={item.product.id}
+                  key={itemKey}
                   className="glass-panel"
                   style={{
                     display: 'flex',
@@ -134,7 +162,7 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={() => handleToggleSelect(item.product.id)}
+                    onChange={() => handleToggleSelect(itemKey)}
                     style={{
                       width: '18px',
                       height: '18px',
@@ -143,7 +171,7 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
                     }}
                   />
                   <img 
-                    src={item.product.imageUrl} 
+                    src={displayImageUrl} 
                     alt={item.product.productName} 
                     style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', backgroundColor: 'white' }}
                   />
@@ -153,7 +181,14 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
                         {item.product.productName}
                       </Link>
                     </h4>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.product.category}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.product.category}</span>
+                      {(item.selectedColor || item.selectedSize) && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                          Phân loại: {[item.selectedColor, item.selectedSize].filter(Boolean).join(' - ')}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Quantity controls */}
@@ -167,7 +202,7 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
                     height: '34px'
                   }}>
                     <button 
-                      onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+                      onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1, item.selectedColor, item.selectedSize)}
                       style={{ width: '30px', height: '100%', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}
                     >
                       -
@@ -176,7 +211,7 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
                       {item.quantity}
                     </span>
                     <button 
-                      onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
+                      onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1, item.selectedColor, item.selectedSize)}
                       style={{ width: '30px', height: '100%', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}
                     >
                       +
@@ -195,7 +230,7 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveFromCart, user, o
 
                   {/* Remove button */}
                   <button 
-                    onClick={() => onRemoveFromCart(item.product.id)}
+                    onClick={() => onRemoveFromCart(item.product.id, item.selectedColor, item.selectedSize)}
                     style={{
                       background: 'none',
                       border: 'none',

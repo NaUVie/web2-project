@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { User, Lock, FileText, CheckCircle, Eye } from 'lucide-react';
 
@@ -617,7 +617,12 @@ export default function Profile({ user }) {
                       )}
                       <div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{item.product?.productName || 'Sản phẩm'}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Đơn giá: {parseFloat(unitPrice).toLocaleString('vi-VN')} đ</div>
+                        {(item.color || item.size) && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600, marginTop: '0.1rem' }}>
+                            Phân loại: {[item.color, item.size].filter(Boolean).join(' - ')}
+                          </div>
+                        )}
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Đơn giá: {parseFloat(unitPrice).toLocaleString('vi-VN')} đ</div>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', fontSize: '0.85rem' }}>

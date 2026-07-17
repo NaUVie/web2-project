@@ -2,12 +2,15 @@ package com.rainbowforest.productcatalogservice.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rainbowforest.productcatalogservice.entity.Product;
+import com.rainbowforest.productcatalogservice.entity.ProductVariant;
 import com.rainbowforest.productcatalogservice.repository.ProductRepository;
+import com.rainbowforest.productcatalogservice.repository.ProductVariantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service
 public class OrderEventConsumer {
@@ -16,6 +19,9 @@ public class OrderEventConsumer {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ProductVariantRepository productVariantRepository;
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
@@ -40,21 +46,67 @@ public class OrderEventConsumer {
                         sendCompensationEvent(event.getOrderId(), reason);
                         throw new RuntimeException("Stock update failed: " + reason);
                     }
-                    
-                    if (product.getAvailability() < item.getQuantity()) {
-                        String reason = "Insufficient stock for product: " + product.getProductName() + 
-                                       " (Available: " + product.getAvailability() + ", Requested: " + item.getQuantity() + ")";
-                        sendCompensationEvent(event.getOrderId(), reason);
-                        throw new RuntimeException("Stock update failed: " + reason);
+
+                    // Check if variant color/size was selected
+                    boolean hasVariantSelected = (item.getColor() != null && !item.getColor().trim().isEmpty()) ||
+                                                (item.getSize() != null && !item.getSize().trim().isEmpty());
+
+                    ProductVariant matchedVariant = null;
+                    if (hasVariantSelected) {
+                        List<ProductVariant> variants = productVariantRepository.findByProductId(item.getProductId());
+                        if (variants != null) {
+                            for (ProductVariant v : variants) {
+                                boolean colorMatch = (item.getColor() == null && v.getColor() == null) ||
+                                                     (item.getColor() != null && item.getColor().equalsIgnoreCase(v.getColor()));
+                                boolean sizeMatch = (item.getSize() == null && v.getSize() == null) ||
+                                                    (item.getSize() != null && item.getSize().equalsIgnoreCase(v.getSize()));
+                                if (colorMatch && sizeMatch) {
+                                    matchedVariant = v;
+                                    break;
+                                }
+                            }
+                        }
                     }
-                    
-                    // Deduct stock
-                    int oldStock = product.getAvailability();
-                    product.setAvailability(oldStock - item.getQuantity());
-                    productRepository.save(product);
-                    
-                    System.out.println("======> CATALOG SERVICE [Kafka]: Deducted " + item.getQuantity() + 
-                                       " units from Product: " + product.getProductName() + " (Stock: " + oldStock + " -> " + product.getAvailability() + ")");
+
+                    if (matchedVariant != null) {
+                        // Deduct from matching Variant
+                        if (matchedVariant.getAvailability() < item.getQuantity()) {
+                            String reason = "Insufficient stock for product variant " + product.getProductName() + 
+                                           " (Color: " + matchedVariant.getColor() + ", Size: " + matchedVariant.getSize() + 
+                                           "). Available: " + matchedVariant.getAvailability() + ", Requested: " + item.getQuantity();
+                            sendCompensationEvent(event.getOrderId(), reason);
+                            throw new RuntimeException("Stock update failed: " + reason);
+                        }
+
+                        int oldVarStock = matchedVariant.getAvailability();
+                        matchedVariant.setAvailability(oldVarStock - item.getQuantity());
+                        productVariantRepository.save(matchedVariant);
+
+                        // Also deduct from main product stock to keep them in sync
+                        int oldProdStock = product.getAvailability();
+                        product.setAvailability(Math.max(0, oldProdStock - item.getQuantity()));
+                        productRepository.save(product);
+
+                        System.out.println("======> CATALOG SERVICE [Kafka]: Deducted " + item.getQuantity() + 
+                                           " units from Product Variant: " + product.getProductName() + " [" + 
+                                           matchedVariant.getColor() + " - " + matchedVariant.getSize() + "] (Variant Stock: " + 
+                                           oldVarStock + " -> " + matchedVariant.getAvailability() + ")");
+                    } else {
+                        // Deduct from main Product directly
+                        if (product.getAvailability() < item.getQuantity()) {
+                            String reason = "Insufficient stock for product: " + product.getProductName() + 
+                                           " (Available: " + product.getAvailability() + ", Requested: " + item.getQuantity() + ")";
+                            sendCompensationEvent(event.getOrderId(), reason);
+                            throw new RuntimeException("Stock update failed: " + reason);
+                        }
+                        
+                        int oldStock = product.getAvailability();
+                        product.setAvailability(oldStock - item.getQuantity());
+                        productRepository.save(product);
+                        
+                        System.out.println("======> CATALOG SERVICE [Kafka]: Deducted " + item.getQuantity() + 
+                                           " units from Product: " + product.getProductName() + " (Stock: " + oldStock + " -> " + product.getAvailability() + ")");
+                    }
                 }
                 
                 System.out.println("======> CATALOG SERVICE [Kafka]: Stock deduction completed successfully for Order ID: " + event.getOrderId());

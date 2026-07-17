@@ -100,7 +100,7 @@ public class OrderController {
         try {
             orderService.saveOrder(order);
             for (Item item : cart) {
-                cartService.deleteItemFromCart(activeCartId, item.getProduct().getId());
+                cartService.deleteItemFromCart(activeCartId, item.getProduct().getId(), item.getColor(), item.getSize());
             }
 
             // Publish event to Kafka
@@ -113,7 +113,9 @@ public class OrderController {
                             item.getProduct().getId(),
                             item.getProduct().getProductName(),
                             item.getQuantity(),
-                            actualPrice
+                            actualPrice,
+                            item.getColor(),
+                            item.getSize()
                     ));
                 }
                 String userEmail = user.getUserName() + "@gmail.com";
@@ -277,7 +279,9 @@ public class OrderController {
                                 item.getProduct().getId(),
                                 item.getProduct().getProductName(),
                                 item.getQuantity(),
-                                actualPrice
+                                actualPrice,
+                                item.getColor(),
+                                item.getSize()
                         ));
                     }
                 }

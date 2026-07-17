@@ -35,6 +35,9 @@ public class Product {
     @JsonIgnore
     private List<Item> items;
 
+    @Transient
+    private List<ProductVariantDto> variants;
+
     public Long getId() {
         return id;
     }
@@ -81,5 +84,13 @@ public class Product {
 
     public void setPromoPrice(BigDecimal promoPrice) {
         this.promoPrice = promoPrice;
+    }
+
+    public List<ProductVariantDto> getVariants() {
+        return variants;
+    }
+
+    public void setVariants(List<ProductVariantDto> variants) {
+        this.variants = variants;
     }
 }

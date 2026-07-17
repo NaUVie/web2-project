@@ -44,6 +44,8 @@ public class CartController {
     public ResponseEntity<List<Object>> addItemToCart(
             @RequestParam("productId") Long productId,
             @RequestParam("quantity") Integer quantity,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "size", required = false) String size,
             @RequestHeader(value = "Cookie", required = false) String cartId,
             @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
             HttpServletRequest request) {
@@ -56,12 +58,12 @@ public class CartController {
         List<Object> cart = cartService.getCart(activeCartId);
         if(cart != null) {
         	if(cart.isEmpty()){
-        		cartService.addItemToCart(activeCartId, productId, quantity);
+        		cartService.addItemToCart(activeCartId, productId, quantity, color, size);
         	}else{
-        		if(cartService.checkIfItemIsExist(activeCartId, productId)){
-        			cartService.changeItemQuantity(activeCartId, productId, quantity);
+        		if(cartService.checkIfItemIsExist(activeCartId, productId, color, size)){
+        			cartService.changeItemQuantity(activeCartId, productId, quantity, color, size);
         		}else {
-        			cartService.addItemToCart(activeCartId, productId, quantity);
+        			cartService.addItemToCart(activeCartId, productId, quantity, color, size);
         		}
         	}
         	return new ResponseEntity<List<Object>>(
@@ -77,6 +79,8 @@ public class CartController {
     @DeleteMapping(value = "/cart", params = "productId")
     public ResponseEntity<Void> removeItemFromCart(
             @RequestParam("productId") Long productId,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "size", required = false) String size,
             @RequestHeader(value = "Cookie", required = false) String cartId,
             @RequestHeader(value = "X-User-Id", required = false) String headerUserId) {
     	
@@ -87,7 +91,7 @@ public class CartController {
 
         List<Object> cart = cartService.getCart(activeCartId);
     	if(cart != null) {
-    		cartService.deleteItemFromCart(activeCartId, productId);
+    		cartService.deleteItemFromCart(activeCartId, productId, color, size);
             return new ResponseEntity<Void>(
             		headerGenerator.getHeadersForSuccessGetMethod(),
             		HttpStatus.OK);

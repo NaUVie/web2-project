@@ -380,7 +380,9 @@ export const api = {
   // Shop (Order Service)
   syncCart: async (cartItems, userId) => {
     for (const item of cartItems) {
-      await fetch(`${API_BASE}/shop/cart?productId=${item.product.id}&quantity=${item.quantity}`, {
+      const colorParam = item.selectedColor ? `&color=${encodeURIComponent(item.selectedColor)}` : '';
+      const sizeParam = item.selectedSize ? `&size=${encodeURIComponent(item.selectedSize)}` : '';
+      await fetch(`${API_BASE}/shop/cart?productId=${item.product.id}&quantity=${item.quantity}${colorParam}${sizeParam}`, {
         method: 'POST',
         headers: getAuthHeaders()
       });

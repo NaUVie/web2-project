@@ -21,20 +21,28 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private CartRedisRepository cartRedisRepository;
 
-    @Override
-    @CircuitBreaker(name = "productService", fallbackMethod = "addItemToCartFallback")
-    public void addItemToCart(String cartId, Long productId, Integer quantity) {
-        log.info("[CartService] Fetching product id={} from product-catalog-service", productId);
-        Product product = productClient.getProductById(productId);
-        Item item = new Item(quantity, product, CartUtilities.getSubTotalForItem(product, quantity));
-        cartRedisRepository.addItemToCart(cartId, item);
-        log.info("[CartService] Added product id={} to cart id={}", productId, cartId);
+    private boolean matchItem(Item item, Long productId, String color, String size) {
+        if (!item.getProduct().getId().equals(productId)) {
+            return false;
+        }
+        boolean colorMatch = (color == null && item.getColor() == null) || 
+                             (color != null && color.equalsIgnoreCase(item.getColor()));
+        boolean sizeMatch = (size == null && item.getSize() == null) || 
+                            (size != null && size.equalsIgnoreCase(item.getSize()));
+        return colorMatch && sizeMatch;
     }
 
-    /**
-     * Fallback khi product-catalog-service không khả dụng (Circuit Breaker mở).
-     */
-    public void addItemToCartFallback(String cartId, Long productId, Integer quantity, Throwable t) {
+    @Override
+    @CircuitBreaker(name = "productService", fallbackMethod = "addItemToCartFallback")
+    public void addItemToCart(String cartId, Long productId, Integer quantity, String color, String size) {
+        log.info("[CartService] Fetching product id={} from product-catalog-service", productId);
+        Product product = productClient.getProductById(productId);
+        Item item = new Item(quantity, product, CartUtilities.getSubTotalForItem(product, quantity, color, size), color, size);
+        cartRedisRepository.addItemToCart(cartId, item);
+        log.info("[CartService] Added product id={} (variant: color={}, size={}) to cart id={}", productId, color, size, cartId);
+    }
+
+    public void addItemToCartFallback(String cartId, Long productId, Integer quantity, String color, String size, Throwable t) {
         log.error("[CircuitBreaker] product-catalog-service unavailable. cartId={}, productId={}, reason={}",
                 cartId, productId, t.getMessage());
         throw new RuntimeException("Dịch vụ sản phẩm tạm thời không khả dụng. Vui lòng thử lại sau.");
@@ -46,33 +54,35 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void changeItemQuantity(String cartId, Long productId, Integer quantity) {
+    public void changeItemQuantity(String cartId, Long productId, Integer quantity, String color, String size) {
         List<Item> cart = (List)cartRedisRepository.getCart(cartId, Item.class);
         for(Item item : cart){
-            if((item.getProduct().getId()).equals(productId)){
+            if(matchItem(item, productId, color, size)){
                 cartRedisRepository.deleteItemFromCart(cartId, item);
                 item.setQuantity(quantity);
-                item.setSubTotal(CartUtilities.getSubTotalForItem(item.getProduct(),quantity));
+                item.setSubTotal(CartUtilities.getSubTotalForItem(item.getProduct(), quantity, color, size));
                 cartRedisRepository.addItemToCart(cartId, item);
+                break;
             }
         }
     }
 
     @Override
-    public void deleteItemFromCart(String cartId, Long productId) {
+    public void deleteItemFromCart(String cartId, Long productId, String color, String size) {
         List<Item> cart = (List) cartRedisRepository.getCart(cartId, Item.class);
         for(Item item : cart){
-            if((item.getProduct().getId()).equals(productId)){
+            if(matchItem(item, productId, color, size)){
                 cartRedisRepository.deleteItemFromCart(cartId, item);
+                break;
             }
         }
     }
 
     @Override
-    public boolean checkIfItemIsExist(String cartId, Long productId) {
+    public boolean checkIfItemIsExist(String cartId, Long productId, String color, String size) {
         List<Item> cart = (List) cartRedisRepository.getCart(cartId, Item.class);
         for(Item item : cart){
-            if((item.getProduct().getId()).equals(productId)){
+            if(matchItem(item, productId, color, size)){
                 return true;
             }
         }

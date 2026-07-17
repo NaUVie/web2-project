@@ -293,13 +293,20 @@ export default function Checkout({ cart, user, onClearCart }) {
           {/* List items mini preview */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '200px', overflowY: 'auto', paddingRight: '0.25rem' }}>
             {checkoutItems.map(item => (
-              <div key={item.product.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
-                  {item.product.productName} <strong style={{ color: 'var(--text-primary)' }}>x{item.quantity}</strong>
-                </span>
-                <strong style={{ color: 'var(--text-primary)' }}>
-                  {((item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price)) * item.quantity).toLocaleString('vi-VN')} đ
-                </strong>
+              <div key={item.key || `${item.product.id}-${item.selectedColor || ''}-${item.selectedSize || ''}`} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', flexDirection: 'column', gap: '0.15rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+                    {item.product.productName} <strong style={{ color: 'var(--text-primary)' }}>x{item.quantity}</strong>
+                  </span>
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    {((item.product.promoPrice ? parseFloat(item.product.promoPrice) : parseFloat(item.product.price)) * item.quantity).toLocaleString('vi-VN')} đ
+                  </strong>
+                </div>
+                {(item.selectedColor || item.selectedSize) && (
+                  <span style={{ color: 'var(--accent-primary)', fontSize: '0.75rem', fontWeight: 600 }}>
+                    Phân loại: {[item.selectedColor, item.selectedSize].filter(Boolean).join(' - ')}
+                  </span>
+                )}
               </div>
             ))}
           </div>

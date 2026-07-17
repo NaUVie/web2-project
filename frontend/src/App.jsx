@@ -43,12 +43,12 @@ function AppContent({
   // Check if current page is admin dashboard (/admin) or admin login (/admin/login)
   const isAdminRoute = location.pathname.startsWith('/admin');
 
-  const handleBuyNow = (product, quantity = 1) => {
-    handleAddToCart(product, quantity);
+  const handleBuyNow = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
+    handleAddToCart(product, quantity, selectedColor, selectedSize);
     if (!user) {
       navigate('/login');
     } else {
-      navigate('/checkout', { state: { checkoutItems: [{ product, quantity }] } });
+      navigate('/checkout', { state: { checkoutItems: [{ product, quantity, selectedColor, selectedSize }] } });
     }
   };
 
@@ -134,20 +134,40 @@ function App() {
   }, [theme]);
 
   // Cart operations
-  const handleAddToCart = (product, quantity = 1) => {
+  const handleAddToCart = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
     setCart(prevCart => {
-      const existingItemIndex = prevCart.findIndex(item => item.product.id === product.id);
+      const existingItemIndex = prevCart.findIndex(item => 
+        item.product.id === product.id && 
+        item.selectedColor === selectedColor && 
+        item.selectedSize === selectedSize
+      );
       let newCart = [...prevCart];
+
+      let maxStock = product.availability;
+      if (selectedColor || selectedSize) {
+        const variant = product.variants?.find(v => 
+          (selectedColor ? v.color === selectedColor : true) &&
+          (selectedSize ? v.size === selectedSize : true)
+        );
+        if (variant) {
+          maxStock = variant.availability;
+        }
+      }
 
       if (existingItemIndex > -1) {
         const currentQty = newCart[existingItemIndex].quantity;
-        const newQty = Math.min(product.availability, currentQty + quantity);
+        const newQty = Math.min(maxStock, currentQty + quantity);
         newCart[existingItemIndex] = {
           ...newCart[existingItemIndex],
           quantity: newQty
         };
       } else {
-        newCart.push({ product, quantity: Math.min(product.availability, quantity) });
+        newCart.push({ 
+          product, 
+          quantity: Math.min(maxStock, quantity),
+          selectedColor,
+          selectedSize
+        });
       }
 
       localStorage.setItem('nexus_cart', JSON.stringify(newCart));
@@ -155,19 +175,33 @@ function App() {
     });
   };
 
-  const handleUpdateQuantity = (productId, newQuantity) => {
+  const handleUpdateQuantity = (productId, newQuantity, selectedColor = null, selectedSize = null) => {
     if (newQuantity <= 0) {
-      handleRemoveFromCart(productId);
+      handleRemoveFromCart(productId, selectedColor, selectedSize);
       return;
     }
 
     setCart(prevCart => {
-      const item = prevCart.find(i => i.product.id === productId);
+      const item = prevCart.find(i => 
+        i.product.id === productId && 
+        i.selectedColor === selectedColor && 
+        i.selectedSize === selectedSize
+      );
       if (!item) return prevCart;
 
-      const maxAvailability = item.product.availability;
+      let maxAvailability = item.product.availability;
+      if (selectedColor || selectedSize) {
+        const variant = item.product.variants?.find(v => 
+          (selectedColor ? v.color === selectedColor : true) &&
+          (selectedSize ? v.size === selectedSize : true)
+        );
+        if (variant) {
+          maxAvailability = variant.availability;
+        }
+      }
+
       const updatedCart = prevCart.map(item => 
-        item.product.id === productId 
+        (item.product.id === productId && item.selectedColor === selectedColor && item.selectedSize === selectedSize)
           ? { ...item, quantity: Math.min(maxAvailability, newQuantity) } 
           : item
       );
@@ -177,9 +211,11 @@ function App() {
     });
   };
 
-  const handleRemoveFromCart = (productId) => {
+  const handleRemoveFromCart = (productId, selectedColor = null, selectedSize = null) => {
     setCart(prevCart => {
-      const updatedCart = prevCart.filter(item => item.product.id !== productId);
+      const updatedCart = prevCart.filter(item => 
+        !(item.product.id === productId && item.selectedColor === selectedColor && item.selectedSize === selectedSize)
+      );
       localStorage.setItem('nexus_cart', JSON.stringify(updatedCart));
       return updatedCart;
     });

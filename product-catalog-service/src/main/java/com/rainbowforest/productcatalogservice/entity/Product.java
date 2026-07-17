@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table (name = "products")
@@ -38,6 +40,9 @@ public class Product {
 
     @Column (name = "promo_price")
     private BigDecimal promoPrice;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariant> variants = new ArrayList<>();
 
 	public Product() {
 
@@ -106,4 +111,12 @@ public class Product {
 	public void setPromoPrice(BigDecimal promoPrice) {
 		this.promoPrice = promoPrice;
 	}
+
+    public List<ProductVariant> getVariants() {
+        return variants;
+    }
+
+    public void setVariants(List<ProductVariant> variants) {
+        this.variants = variants;
+    }
 }
