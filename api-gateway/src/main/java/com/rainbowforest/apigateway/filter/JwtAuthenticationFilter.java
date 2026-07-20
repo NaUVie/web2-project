@@ -14,6 +14,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/**
+ * [ĐỒ ÁN CUỐI MÔN - YÊU CẦU 2 & 6 & 7]
+ * - KIẾN TRÚC MICROSERVICES: Gateway đóng vai trò là cửa ngõ tập trung điều hướng và xử lý bảo mật.
+ * - LOAD BALANCING & SCALING: Sử dụng Gateway tích hợp Eureka để tự động định tuyến tải đến các service instance.
+ * - AUTHENTICATION & AUTHORIZATION: Xác thực người dùng bằng JWT Token ngay tại Gateway trước khi phân phối request.
+ * - PHÂN QUYỀN (RBAC): Kiểm tra quyền sở hữu (ADMIN / USER) đối với các tài nguyên bảo vệ như Product, User.
+ */
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 

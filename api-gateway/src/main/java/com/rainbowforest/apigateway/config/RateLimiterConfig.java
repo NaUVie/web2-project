@@ -8,6 +8,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
+/**
+ * [ĐỒ ÁN CUỐI MÔN - YÊU CẦU 11: RATE LIMITING]
+ * - Cấu hình giới hạn tần suất gửi yêu cầu (Rate Limiting) của Client bằng cách dùng Redis Token Bucket.
+ * - Giới hạn số lượng request từ mỗi địa chỉ IP để chống Spam, chống tấn công DDoS cho hệ thống Microservices.
+ */
 @Configuration
 public class RateLimiterConfig {
 

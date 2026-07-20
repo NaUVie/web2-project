@@ -11,6 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
+/**
+ * [ĐỒ ÁN CUỐI MÔN - YÊU CẦU 5 & 12: CACHING & NOSQL REDIS]
+ * - Sử dụng Redis (NoSQL) làm lớp bộ nhớ đệm (Caching Layer) để tăng tốc độ phản hồi danh sách sản phẩm và chi tiết sản phẩm.
+ * - Áp dụng các annotation Spring Cache như:
+ *   - `@Cacheable`: Cache kết quả truy vấn Database vào Redis. Lần gọi tiếp theo sẽ đọc từ Redis mà không cần truy vấn MySQL.
+ *   - `@CacheEvict`: Tự động xóa (invalidate) cache liên quan trong Redis khi sản phẩm được thêm mới hoặc cập nhật để tránh dữ liệu bị cũ (stale data).
+ */
 @Slf4j
 @Service
 @Transactional
@@ -90,10 +97,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Caching(evict = {
             @CacheEvict(value = "products", allEntries = true),
-            @CacheEvict(value = "productsByCategory", allEntries = true)
+            @CacheEvict(value = "productsByCategory", allEntries = true),
+            @CacheEvict(value = "product", key = "#product.id", condition = "#product.id != null")
     })
     public Product addProduct(Product product) {
-        log.info("[Cache EVICT] Product added/updated — clearing products & productsByCategory caches");
+        log.info("[Cache EVICT] Product added/updated — clearing related caches");
         return productRepository.save(product);
     }
 

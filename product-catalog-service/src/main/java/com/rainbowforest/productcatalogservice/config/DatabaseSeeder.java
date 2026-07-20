@@ -101,8 +101,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         // 5. Seed Products
-        productVariantRepository.deleteAll();
-        productRepository.deleteAll();
+        if (productRepository.count() == 0) {
 
         // Electronics (6 products)
         seedProduct("MacBook Pro M3 Max", "60000000", "55000000",
@@ -196,6 +195,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "Tay cầm", 40, "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=60");
 
         System.out.println("======> Seeded and updated all products successfully.");
+        }
     }
 
     private void seedProduct(String name, String price, String promoPrice, String desc, String category, int availability, String imageUrl) {

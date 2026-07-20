@@ -87,10 +87,34 @@ public class ProductController {
         existingProduct.setPromoPrice(product.getPromoPrice());
         
         if (product.getVariants() != null) {
-            existingProduct.getVariants().clear();
+            // Map incoming variants by ID
+            java.util.Map<Long, ProductVariant> incomingMap = new java.util.HashMap<>();
             for (ProductVariant v : product.getVariants()) {
-                v.setProduct(existingProduct);
-                existingProduct.getVariants().add(v);
+                if (v.getId() != null) {
+                    incomingMap.put(v.getId(), v);
+                }
+            }
+
+            // Remove existing variants not present in incoming payload
+            existingProduct.getVariants().removeIf(ev -> ev.getId() != null && !incomingMap.containsKey(ev.getId()));
+
+            // Update existing variants or add new ones
+            for (ProductVariant v : product.getVariants()) {
+                if (v.getId() != null) {
+                    for (ProductVariant ev : existingProduct.getVariants()) {
+                        if (ev.getId().equals(v.getId())) {
+                            ev.setColor(v.getColor());
+                            ev.setSize(v.getSize());
+                            ev.setPrice(v.getPrice());
+                            ev.setAvailability(v.getAvailability());
+                            ev.setImageUrl(v.getImageUrl());
+                            break;
+                        }
+                    }
+                } else {
+                    v.setProduct(existingProduct);
+                    existingProduct.getVariants().add(v);
+                }
             }
         } else {
             existingProduct.getVariants().clear();

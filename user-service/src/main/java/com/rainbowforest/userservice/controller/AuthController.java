@@ -16,6 +16,15 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * [ĐỒ ÁN CUỐI MÔN - YÊU CẦU 5 & 6]
+ * - AUTHENTICATION & AUTHORIZATION (JWT): Cung cấp dịch vụ Đăng ký, Đăng nhập, cấp phát Access Token có chữ ký JWT.
+ * - REFRESH TOKEN & NOSQL REDIS:
+ *   - Sau khi đăng nhập thành công, tạo một cặp Access Token (JWT) ngắn hạn và Refresh Token (UUID) dài hạn.
+ *   - Refresh Token được lưu trữ tập trung trong Redis (NoSQL) với thời gian hết hạn là 7 ngày để phục vụ cấp lại Access Token
+ *     và quản lý phiên làm việc một cách bảo mật, tối ưu hiệu năng.
+ *   - Khi Logout, xóa Refresh Token khỏi Redis để hủy phiên làm việc ngay lập tức.
+ */
 @RestController
 @Slf4j
 public class AuthController {
