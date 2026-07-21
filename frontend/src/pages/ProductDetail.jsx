@@ -11,6 +11,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [addedAlert, setAddedAlert] = useState(false);
+  const [errorAlert, setErrorAlert] = useState('');
 
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -34,32 +35,50 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Set default variants on product load
+  // Reset selections on product change
   useEffect(() => {
-    if (product && product.variants && product.variants.length > 0) {
-      const colors = [...new Set(product.variants.map(v => v.color).filter(Boolean))];
-      const sizes = [...new Set(product.variants.map(v => v.size).filter(Boolean))];
-      if (colors.length > 0) setSelectedColor(colors[0]);
-      if (sizes.length > 0) setSelectedSize(sizes[0]);
-    } else {
-      setSelectedColor(null);
-      setSelectedSize(null);
-    }
+    setSelectedColor(null);
+    setSelectedSize(null);
   }, [product]);
 
+  const colors = product?.variants ? [...new Set(product.variants.map(v => v.color).filter(Boolean))] : [];
+  const sizes = product?.variants ? [...new Set(product.variants.map(v => v.size).filter(Boolean))] : [];
+
+  const isColorRequired = colors.length > 0;
+  const isSizeRequired = sizes.length > 0;
+
+  const isVariantSelected = 
+    (!isColorRequired || selectedColor) && 
+    (!isSizeRequired || selectedSize);
+
   // Determine active variant
-  const activeVariant = product?.variants?.find(v => 
+  const activeVariant = isVariantSelected ? product?.variants?.find(v => 
     (selectedColor ? v.color === selectedColor : true) &&
     (selectedSize ? v.size === selectedSize : true)
-  );
+  ) : null;
 
   const displayPrice = activeVariant && activeVariant.price ? activeVariant.price : (product?.promoPrice || product?.price);
   const hasPromoPrice = product?.promoPrice && !(activeVariant && activeVariant.price);
   const displayAvailability = activeVariant ? activeVariant.availability : (product ? product.availability : 0);
   const isAvailable = displayAvailability > 0;
 
+  const validateSelection = () => {
+    if (isColorRequired && !selectedColor) {
+      setErrorAlert('Vui lòng chọn màu sắc sản phẩm');
+      setTimeout(() => setErrorAlert(''), 3000);
+      return false;
+    }
+    if (isSizeRequired && !selectedSize) {
+      setErrorAlert('Vui lòng chọn kích thước / dung lượng');
+      setTimeout(() => setErrorAlert(''), 3000);
+      return false;
+    }
+    return true;
+  };
+
   const handleAddToCart = () => {
     if (product) {
+      if (!validateSelection()) return;
       onAddToCart(product, quantity, selectedColor, selectedSize);
       setAddedAlert(true);
       setTimeout(() => setAddedAlert(false), 2000);
@@ -68,6 +87,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
 
   const handleBuyNow = () => {
     if (product) {
+      if (!validateSelection()) return;
       onBuyNow(product, quantity, selectedColor, selectedSize);
     }
   };
@@ -87,9 +107,6 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
       </div>
     );
   }
-
-  const colors = product.variants ? [...new Set(product.variants.map(v => v.color).filter(Boolean))] : [];
-  const sizes = product.variants ? [...new Set(product.variants.map(v => v.size).filter(Boolean))] : [];
 
   return (
     <div className="container animate-fade-in" style={{ padding: '2rem 0 4rem 0', textAlign: 'left' }}>
@@ -194,7 +211,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
                 {colors.map(color => (
                   <button
                     key={color}
-                    onClick={() => setSelectedColor(color)}
+                    onClick={() => setSelectedColor(selectedColor === color ? null : color)}
                     style={{
                       padding: '0.5rem 1.25rem',
                       borderRadius: '8px',
@@ -226,7 +243,7 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
                     <button
                       key={size}
                       disabled={!isAvailableForColor}
-                      onClick={() => setSelectedSize(size)}
+                      onClick={() => setSelectedSize(selectedSize === size ? null : size)}
                       style={{
                         padding: '0.5rem 1.25rem',
                         borderRadius: '8px',
@@ -319,6 +336,22 @@ export default function ProductDetail({ onAddToCart, onBuyNow }) {
               textAlign: 'center'
             }}>
               ✓ Đã thêm sản phẩm vào giỏ hàng thành công!
+            </div>
+          )}
+
+          {/* Error alert (e.g. please select variant) */}
+          {errorAlert && (
+            <div style={{
+              marginTop: '1rem',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              color: '#ef4444',
+              padding: '0.75rem',
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              textAlign: 'center'
+            }}>
+              ⚠ {errorAlert}
             </div>
           )}
 

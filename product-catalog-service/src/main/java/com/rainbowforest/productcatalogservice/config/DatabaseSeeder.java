@@ -31,174 +31,172 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        // Clear all existing data to ensure a fresh, clean seeding
+        productVariantRepository.deleteAll();
+        productRepository.deleteAll();
+        categoryRepository.deleteAll();
+        blogCategoryRepository.deleteAll();
+        blogPostRepository.deleteAll();
+        advertisementRepository.deleteAll();
+        System.out.println("======> Cleared old data for fresh seeding.");
+
         // 1. Seed Categories
-        if (categoryRepository.count() == 0) {
-            Category cat1 = new Category("Electronics", "electronics");
-            Category cat2 = new Category("Audio", "audio");
-            Category cat3 = new Category("Footwear", "footwear");
-            Category cat4 = new Category("Accessories", "accessories");
-            Category cat5 = new Category("Tay cầm", "tay-cam");
-            categoryRepository.saveAll(Arrays.asList(cat1, cat2, cat3, cat4, cat5));
-            System.out.println("======> Seeded product categories.");
-        } else {
-            // Ensure Tay cầm category exists
-            boolean hasTayCam = categoryRepository.findAll().stream().anyMatch(c -> c.getName().equalsIgnoreCase("Tay cầm"));
-            if (!hasTayCam) {
-                Category cat5 = new Category("Tay cầm", "tay-cam");
-                categoryRepository.save(cat5);
-                System.out.println("======> Added missing 'Tay cầm' category.");
-            }
-        }
+        Category catLaptops = categoryRepository.save(new Category("Laptops & Máy tính", "laptops-computers"));
+        Category catPhones = categoryRepository.save(new Category("Điện thoại & Tablet", "phones-tablets"));
+        Category catAudio = categoryRepository.save(new Category("Thiết bị âm thanh", "audio-devices"));
+        Category catKeyboards = categoryRepository.save(new Category("Bàn phím & Phụ kiện", "keyboards-accessories"));
+        Category catControllers = categoryRepository.save(new Category("Tay cầm chơi game", "game-controllers"));
+        Category catSneakers = categoryRepository.save(new Category("Giày thể thao", "sneakers"));
+        System.out.println("======> Seeded new categories.");
 
         // 2. Seed Blog Categories
-        if (blogCategoryRepository.count() == 0) {
-            BlogCategory bcat1 = new BlogCategory("Technology News", "tech-news");
-            BlogCategory bcat2 = new BlogCategory("Buying Guides", "guides");
-            blogCategoryRepository.saveAll(Arrays.asList(bcat1, bcat2));
-            System.out.println("======> Seeded blog categories.");
-        }
+        BlogCategory bcat1 = blogCategoryRepository.save(new BlogCategory("Tin Tức Công Nghệ", "tech-news"));
+        BlogCategory bcat2 = blogCategoryRepository.save(new BlogCategory("Hướng Dẫn Mua Sắm", "guides"));
+        System.out.println("======> Seeded blog categories.");
 
         // 3. Seed Blog Posts
-        if (blogPostRepository.count() == 0) {
-            BlogPost post1 = new BlogPost();
-            post1.setTitle("The Future of Apple M3 Max Laptops");
-            post1.setContent("With the release of the Apple M3 Max processor, laptops have taken a giant leap in graphic and compute performance. Users can now edit 8K videos and train small machine learning models on a portable machine without compromising battery life. In this article, we look into the architectural changes in the GPU and unified memory architecture.");
-            post1.setCoverImageUrl("https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=60");
-            post1.setCategoryName("Technology News");
+        BlogPost post1 = new BlogPost();
+        post1.setTitle("Tương lai của vi xử lý Apple M3 Max trên máy tính xách tay");
+        post1.setContent("Với việc phát hành bộ vi xử lý Apple M3 Max, máy tính xách tay đã có một bước nhảy vọt về hiệu suất đồ họa và tính toán. Người dùng hiện có thể chỉnh sửa video 8K và huấn luyện các mô hình học máy nhỏ trên một máy di động mà không làm giảm thời lượng pin. Trong bài viết này, chúng tôi xem xét các thay đổi về kiến trúc GPU và bộ nhớ hợp nhất.");
+        post1.setCoverImageUrl("https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=60");
+        post1.setCategoryName("Tin Tức Công Nghệ");
 
-            BlogPost post2 = new BlogPost();
-            post2.setTitle("How to Pick the Best Wireless Noise Cancelling Headphones in 2026");
-            post2.setContent("Wireless noise cancelling headphones are essential for remote workers and travelers. Between Sony, Bose, and Apple, the competition is fiercer than ever. Our buying guide covers key metrics like active noise cancellation depth, audio response curves, microphone quality in call environments, and multi-device connection switching.");
-            post2.setCoverImageUrl("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60");
-            post2.setCategoryName("Buying Guides");
+        BlogPost post2 = new BlogPost();
+        post2.setTitle("Cách chọn Tai nghe Chống ồn Không dây Tốt nhất năm 2026");
+        post2.setContent("Tai nghe chống ồn không dây là thiết bị không thể thiếu đối với những người làm việc từ xa và khách du lịch. Giữa Sony, Bose và Apple, sự cạnh tranh khốc liệt hơn bao giờ hết. Hướng dẫn mua sắm của chúng tôi bao gồm các chỉ số chính như độ sâu chống ồn chủ động (ANC), chất âm đặc trưng, chất lượng micrô và tính năng chuyển đổi thiết bị thông minh.");
+        post2.setCoverImageUrl("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60");
+        post2.setCategoryName("Hướng Dẫn Mua Sắm");
 
-            blogPostRepository.saveAll(Arrays.asList(post1, post2));
-            System.out.println("======> Seeded blog posts.");
-        }
+        blogPostRepository.saveAll(Arrays.asList(post1, post2));
+        System.out.println("======> Seeded blog posts.");
 
         // 4. Seed Banners
-        if (advertisementRepository.count() == 0) {
-            Advertisement banner1 = new Advertisement();
-            banner1.setTitle("Siêu Phẩm Công Nghệ - Giá Sốc Hè 2026");
-            banner1.setImageUrl("https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=1600&auto=format&fit=crop&q=80");
-            banner1.setTargetUrl("/shop?category=Electronics");
-            banner1.setActive(true);
+        Advertisement banner1 = new Advertisement();
+        banner1.setTitle("Siêu Phẩm Công Nghệ - Giá Sốc Hè 2026");
+        banner1.setImageUrl("https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=1600&auto=format&fit=crop&q=80");
+        banner1.setTargetUrl("/shop?category=Laptops %26 M%C3%A1y t%C3%ADnh");
+        banner1.setActive(true);
 
-            Advertisement banner2 = new Advertisement();
-            banner2.setTitle("Thiết Bị Âm Thanh Đỉnh Cao - Giảm Đến 30%");
-            banner2.setImageUrl("https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=1600&auto=format&fit=crop&q=80");
-            banner2.setTargetUrl("/shop?category=Audio");
-            banner2.setActive(true);
+        Advertisement banner2 = new Advertisement();
+        banner2.setTitle("Thiết Bị Âm Thanh Đỉnh Cao - Giảm Đến 30%");
+        banner2.setImageUrl("https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=1600&auto=format&fit=crop&q=80");
+        banner2.setTargetUrl("/shop?category=Thi%E1%BA%BFt b%E1%BB%8B %C3%A2m thanh");
+        banner2.setActive(true);
 
-            Advertisement banner3 = new Advertisement();
-            banner3.setTitle("Thời Trang Giày Thể Thao Mới Nhất");
-            banner3.setImageUrl("https://images.unsplash.com/photo-1549298916-b41d501d3772?w=1600&auto=format&fit=crop&q=80");
-            banner3.setTargetUrl("/shop?category=Footwear");
-            banner3.setActive(true);
+        Advertisement banner3 = new Advertisement();
+        banner3.setTitle("Thời Trang Giày Thể Thao Mới Nhất");
+        banner3.setImageUrl("https://images.unsplash.com/photo-1549298916-b41d501d3772?w=1600&auto=format&fit=crop&q=80");
+        banner3.setTargetUrl("/shop?category=Gi%E1%BA%A3y th%E1%BB%83 thao");
+        banner3.setActive(true);
 
-            advertisementRepository.saveAll(Arrays.asList(banner1, banner2, banner3));
-            System.out.println("======> Seeded advertisement banners.");
-        }
+        advertisementRepository.saveAll(Arrays.asList(banner1, banner2, banner3));
+        System.out.println("======> Seeded advertisement banners.");
 
-        // 5. Seed Products
-        if (productRepository.count() == 0) {
+        // 5. Seed Products and Variants
+        // Laptops & Máy tính
+        Product lap1 = seedProduct("MacBook Pro M3 Max", "60000000", "55000000",
+                "Apple M3 Max chip với 16-core CPU và 40-core GPU, màn hình Liquid Retina XDR sắc nét vượt trội, thiết kế sang trọng đẳng cấp.",
+                "Laptops & Máy tính", 15, "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=60");
+        seedVariant(lap1, "Space Black", "36GB RAM / 1TB SSD", "60000000", 5, "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=60");
+        seedVariant(lap1, "Space Black", "48GB RAM / 1TB SSD", "66000000", 3, "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=60");
+        seedVariant(lap1, "Silver", "36GB RAM / 1TB SSD", "60000000", 4, "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=60");
+        seedVariant(lap1, "Silver", "48GB RAM / 1TB SSD", "66000000", 3, "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=60");
 
-        // Electronics (6 products)
-        seedProduct("MacBook Pro M3 Max", "60000000", "55000000",
-                "Apple M3 Max chip with 16-core CPU and 40-core GPU, 48GB Unified Memory, 1TB SSD storage.",
-                "Electronics", 10, "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&auto=format&fit=crop&q=60");
-        seedProduct("iPhone 15 Pro", "25000000", "22000000",
-                "Titanium design, A17 Pro chip, customizable Action button, and a powerful 3x Telephoto camera.",
-                "Electronics", 25, "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500&auto=format&fit=crop&q=60");
-        seedProduct("UltraWide Gaming Monitor 34\"", "12000000", "10500000",
-                "34-inch curved gaming monitor, 144Hz refresh rate, 1ms response time, HDR10 support, and AMD FreeSync Premium.",
-                "Electronics", 8, "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=60");
-        seedProduct("iPad Pro M4", "28000000", "26500000",
-                "Siêu mỏng nhẹ, màn hình OLED Tandem đột phá, chip Apple M4 cực khủng cho hiệu năng xử lý đồ họa chuyên nghiệp.",
-                "Electronics", 15, "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&auto=format&fit=crop&q=60");
-        seedProduct("ASUS ROG Ally X", "23000000", "21900000",
-                "Máy chơi game cầm tay chạy Windows tốt nhất thế giới, trang bị chip AMD Ryzen Z1 Extreme, dung lượng pin tăng gấp đôi.",
-                "Electronics", 12, "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Samsung Galaxy S24 Ultra", "30000000", "27000000",
-                "Điện thoại Android cao cấp nhất với camera 200MP, khung viền Titanium bền bỉ cùng bút S-Pen đa năng và AI thông minh.",
-                "Electronics", 20, "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&auto=format&fit=crop&q=60");
+        Product lap2 = seedProduct("ASUS ROG Strix G16", "42000000", "39500000",
+                "Laptop Gaming cực đỉnh trang bị vi xử lý Intel Core i9-13980HX, NVIDIA GeForce RTX 4070, màn hình 16-inch 240Hz siêu mượt.",
+                "Laptops & Máy tính", 12, "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=800&auto=format&fit=crop&q=60");
+        seedVariant(lap2, "Eclipse Gray", "16GB RAM / 1TB SSD", "42000000", 7, "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=800&auto=format&fit=crop&q=60");
+        seedVariant(lap2, "Eclipse Gray", "32GB RAM / 1TB SSD", "45500000", 5, "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=800&auto=format&fit=crop&q=60");
 
-        // Audio (5 products)
-        seedProduct("Sony WH-1000XM5", "8500000", null,
-                "Industry leading wireless noise cancelling headphones with Auto NC Optimizer, crystal clear hands-free calling.",
-                "Audio", 15, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60");
-        seedProduct("AirPods Pro 2", "6000000", "5300000",
-                "Tai nghe True Wireless cao cấp của Apple, chống ồn chủ động ANC tốt gấp 2 lần, thời lượng pin tối ưu và hộp sạc tìm kiếm.",
-                "Audio", 35, "https://images.unsplash.com/photo-1588449668365-d15e397f6787?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Marshall Acton III", "7500000", "6800000",
+        // Điện thoại & Tablet
+        Product ph1 = seedProduct("iPhone 15 Pro Max", "30000000", "28500000",
+                "Thiết kế khung viền Titanium siêu bền nhẹ, trang bị chip A17 Pro mạnh mẽ, nút Action tùy biến và hệ thống camera zoom quang học 5x.",
+                "Điện thoại & Tablet", 35, "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph1, "Titan Tự Nhiên", "256GB", "30000000", 12, "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph1, "Titan Tự Nhiên", "512GB", "35000000", 8, "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph1, "Titan Đen", "256GB", "30000000", 10, "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph1, "Titan Đen", "512GB", "35000000", 5, "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&auto=format&fit=crop&q=60");
+
+        Product ph2 = seedProduct("Samsung Galaxy S24 Ultra", "32000000", "29000000",
+                "Điện thoại thông minh Android tích hợp AI thế hệ mới, camera 200MP zoom siêu phân giải, bút S-Pen ghi chú thông minh và viền Titanium bền bỉ.",
+                "Điện thoại & Tablet", 25, "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph2, "Xám Titanium", "256GB", "32000000", 10, "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph2, "Xám Titanium", "512GB", "36000000", 5, "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph2, "Đen Titanium", "256GB", "32000000", 10, "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&auto=format&fit=crop&q=60");
+
+        Product ph3 = seedProduct("iPad Pro M4 OLED", "28000000", "26900000",
+                "Máy tính bảng iPad Pro mỏng nhất của Apple, sử dụng màn hình Tandem OLED rực rỡ và vi xử lý Apple M4 hiệu suất khủng.",
+                "Điện thoại & Tablet", 20, "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph3, "Xám Không Gian", "11 inch - 256GB", "28000000", 10, "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph3, "Xám Không Gian", "13 inch - 256GB", "34500000", 5, "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ph3, "Bạc (Silver)", "11 inch - 256GB", "28000000", 5, "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&auto=format&fit=crop&q=60");
+
+        // Thiết bị âm thanh
+        Product au1 = seedProduct("Sony WH-1000XM5", "8500000", "7900000",
+                "Tai nghe chụp tai không dây chống ồn chủ động cao cấp số 1 thị trường, thời lượng pin sử dụng lên đến 30 giờ liên tục.",
+                "Thiết bị âm thanh", 30, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60");
+        seedVariant(au1, "Đen (Black)", null, "8500000", 15, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60");
+        seedVariant(au1, "Trắng Bạc (Silver)", null, "8500000", 10, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60");
+        seedVariant(au1, "Xanh Navy (Midnight Blue)", null, "8900000", 5, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60");
+
+        Product au2 = seedProduct("Marshall Acton III", "7500000", "6800000",
                 "Loa Bluetooth gia đình mang thiết kế cổ điển sang trọng, chất âm chi tiết sống động, hỗ trợ cổng cắm 3.5mm linh hoạt.",
-                "Audio", 10, "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&auto=format&fit=crop&q=60");
-        seedProduct("JBL Charge 5", "4000000", "3600000",
-                "Loa di động kháng nước chống bụi IP67, chất âm Bass sâu trầm uy lực, tích hợp cổng sạc dự phòng cho điện thoại.",
-                "Audio", 25, "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Sennheiser Momentum 4", "9500000", "8900000",
-                "Tai nghe chụp tai hi-end với chất lượng âm thanh đỉnh cấp, thời lượng pin kỷ lục lên đến 60 giờ nghe nhạc liên tục.",
-                "Audio", 8, "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&auto=format&fit=crop&q=60");
+                "Thiết bị âm thanh", 15, "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&auto=format&fit=crop&q=60");
+        seedVariant(au2, "Đen (Black)", null, "7500000", 8, "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&auto=format&fit=crop&q=60");
+        seedVariant(au2, "Kem (Cream)", null, "7500000", 5, "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&auto=format&fit=crop&q=60");
+        seedVariant(au2, "Nâu (Brown)", null, "7800000", 2, "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&auto=format&fit=crop&q=60");
 
-        // Footwear (5 products)
-        seedProduct("Nike Air Max 270", "3500000", "2800000",
-                "Nike's first lifestyle Air Max brings you style, comfort and big attitude. Features a large Air unit.",
-                "Footwear", 30, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Adidas Ultraboost Light", "5000000", "4200000",
-                "Giày chạy bộ quốc dân thế hệ mới siêu nhẹ, đệm Boost phản hồi lực cực tốt giúp bảo vệ bàn chân và tối ưu lực chạy.",
-                "Footwear", 18, "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Nike Air Jordan 1 Low", "4500000", null,
-                "Đôi giày bóng rổ đường phố mang tính biểu tượng mọi thời đại, phối màu cá tính dễ dàng phối với mọi trang phục.",
-                "Footwear", 15, "https://images.unsplash.com/photo-1597045566677-8cf032ed6634?w=500&auto=format&fit=crop&q=60");
-        seedProduct("New Balance 550", "3800000", "3400000",
-                "Đôi sneaker thời thượng mang cảm hứng retro thập niên 90, chất liệu da cao cấp và kiểu dáng vintage độc đáo.",
-                "Footwear", 22, "https://images.unsplash.com/photo-1539185441755-769473a23570?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Puma Palermo Leather", "2800000", "2400000",
-                "Thiết kế cổ điển lấy cảm hứng từ các sân cỏ nước Ý, chất liệu da lộn mềm mại cùng màu sắc vintage tinh tế.",
-                "Footwear", 14, "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&auto=format&fit=crop&q=60");
+        // Bàn phím & Phụ kiện
+        Product ac1 = seedProduct("Mechanical Keyboard GMMK 2", "2800000", "2500000",
+                "Bàn phím cơ Custom cao cấp từ Glorious, tính năng Hot-swap thay nóng switch, switch Fox Linear bấm mượt mà và khung nhôm sang xịn.",
+                "Bàn phím & Phụ kiện", 45, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ac1, "Đen (Black)", "Compact 65%", "2800000", 15, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ac1, "Đen (Black)", "Full Size 96%", "3200000", 10, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ac1, "Trắng (White)", "Compact 65%", "2800000", 12, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ac1, "Trắng (White)", "Full Size 96%", "3200000", 8, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=60");
 
-        // Accessories (5 products)
-        seedProduct("Mechanical Keyboard GMMK 2", "2800000", null,
-                "Custom compact mechanical keyboard, hot-swappable switches, linear Fox switches, aluminum top frame.",
-                "Accessories", 40, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Logitech MX Master 3S", "3000000", "2600000",
-                "Chuột văn phòng/đồ họa cao cấp nhất, mắt đọc 8K DPI siêu chính xác trên mọi bề mặt, bánh xe cuộn MagSpeed siêu tốc.",
-                "Accessories", 25, "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Elgato Stream Deck MK.2", "4200000", "3900000",
-                "Bàn phím điều khiển gồm 15 phím LCD có thể tùy chỉnh tính năng và hình ảnh hiển thị, thiết bị hoàn hảo cho streamer.",
-                "Accessories", 12, "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=60");
-        seedProduct("SteelSeries Arena 3", "3900000", "3500000",
-                "Hệ thống loa gaming 2.0 mang âm trường rộng mở, tái tạo âm thanh vòm sống động và rõ ràng giúp tối ưu trải nghiệm game.",
-                "Accessories", 15, "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Anker Prime 100W GaN", "1800000", "1500000",
-                "Củ sạc công nghệ GaN Prime sạc siêu nhanh công suất 100W nhỏ gọn nhất, có 3 cổng ra sạc đồng thời cho laptop/điện thoại.",
-                "Accessories", 50, "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&auto=format&fit=crop&q=60");
+        Product ac2 = seedProduct("Logitech MX Master 3S", "3000000", "2600000",
+                "Chuột văn phòng và đồ họa công thái học cao cấp nhất của Logitech, mắt đọc 8K DPI cực chuẩn xác và cuộn siêu tốc MagSpeed.",
+                "Bàn phím & Phụ kiện", 35, "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ac2, "Graphite (Đen Xám)", null, "3000000", 20, "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ac2, "Pale Gray (Trắng Xám)", null, "3000000", 15, "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&auto=format&fit=crop&q=60");
 
-        // Tay cầm (6 products)
-        seedProduct("Sony DualSense Wireless Controller PS5", "1700000", "1500000",
-                "Tay cầm chơi game không dây Sony DualSense cho máy PS5, tích hợp công nghệ phản hồi rung Haptic Feedback và cò nhấn thích ứng Adaptive Triggers.",
-                "Tay cầm", 20, "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Sony DualSense Edge Wireless Controller", "5000000", "4700000",
-                "Tay cầm chơi game chuyên nghiệp cao cấp nhất của Sony cho PS5/PC. Cho phép thay đổi cần analog, gán nút phụ phía sau lưng, tùy chỉnh hành trình cò nhấn.",
-                "Tay cầm", 5, "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Flydigi Apex 4 Wireless Controller", "3200000", "2900000",
-                "Tay cầm chơi game đỉnh cao của Flydigi với nút nhấn micro-switch cơ học lực ấn nhẹ, màn hình LED hiển thị thông tin, cần xoay lực phản hồi cơ học Force Feedback độc đáo.",
-                "Tay cầm", 15, "https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Flydigi Vader 3 Pro", "1400000", "1200000",
-                "Tay cầm chơi game hỗ trợ kết nối đa nền tảng PC/Switch/Android/iOS. Tần số phản hồi 1000Hz, cảm biến Hall Effect Joystick chống trôi, nút bấm cơ học cực nảy.",
-                "Tay cầm", 30, "https://images.unsplash.com/photo-1593118247619-e2d6f056869e?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Gamesir G8 Galileo Type-C Mobile Controller", "2000000", "1700000",
-                "Tay cầm chơi game chuyên nghiệp dành cho điện thoại iPhone 15 và Android. Thiết kế công thái học ôm tay, cần gạt Hall Effect, cổng sạc Type-C trực tiếp.",
-                "Tay cầm", 25, "https://images.unsplash.com/photo-1600861195091-690c92f1d2cc?w=500&auto=format&fit=crop&q=60");
-        seedProduct("Gamesir T4 Cyclone Pro", "1200000", "1000000",
-                "Tay cầm chơi game không dây hỗ trợ PC, Switch, Android, iOS. Sử dụng nút bấm cơ học, cảm biến Hall Effect Joystick, con quay hồi chuyển 6 trục hỗ trợ ngắm bắn.",
-                "Tay cầm", 40, "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=60");
+        // Tay cầm chơi game
+        Product ctrl1 = seedProduct("Sony DualSense Wireless Controller", "1700000", "1550000",
+                "Tay cầm chơi game không dây DualSense của Sony PlayStation 5, cảm giác rung phản hồi Haptic Feedback cực đỉnh và Adaptive Triggers.",
+                "Tay cầm chơi game", 40, "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ctrl1, "Trắng (White)", null, "1700000", 15, "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ctrl1, "Đen (Black)", null, "1700000", 15, "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ctrl1, "Đỏ Cosmic (Cosmic Red)", null, "1800000", 10, "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&auto=format&fit=crop&q=60");
 
-        System.out.println("======> Seeded and updated all products successfully.");
-        }
+        Product ctrl2 = seedProduct("Flydigi Apex 4", "3200000", "2890000",
+                "Tay cầm chơi game cao cấp bật nhất từ Flydigi với cần xoay Force Feedback cơ học tùy chỉnh lực cản độc đáo và màn hình LED hiển thị sinh động.",
+                "Tay cầm chơi game", 20, "https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ctrl2, "Trắng (White)", null, "3200000", 15, "https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=800&auto=format&fit=crop&q=60");
+        seedVariant(ctrl2, "EVA Limited Edition", null, "3800000", 5, "https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=800&auto=format&fit=crop&q=60");
+
+        // Giày thể thao
+        Product sh1 = seedProduct("Nike Air Max 270", "3500000", "2900000",
+                "Đôi giày thể thao năng động tiên phong của Nike với đế khí Air unit cực dày êm ái, kiểu dáng thời thượng bắt mắt.",
+                "Giày thể thao", 40, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh1, "Trắng / Đỏ", "40", "3500000", 10, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh1, "Trắng / Đỏ", "41", "3500000", 10, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh1, "Trắng / Đỏ", "42", "3500000", 5, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh1, "Đen / Xanh Dương", "40", "3500000", 10, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh1, "Đen / Xanh Dương", "41", "3500000", 5, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=60");
+
+        Product sh2 = seedProduct("Adidas Ultraboost Light", "5000000", "4190000",
+                "Dòng giày chạy bộ quốc dân thế hệ mới tối giản hóa trọng lượng đệm, mang lại độ êm vượt trội và khả năng hoàn trả năng lượng hiệu quả.",
+                "Giày thể thao", 30, "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh2, "Đen Core Black", "40", "5000000", 10, "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh2, "Đen Core Black", "41", "5000000", 10, "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh2, "Trắng Cloud White", "40", "5000000", 5, "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=800&auto=format&fit=crop&q=60");
+        seedVariant(sh2, "Trắng Cloud White", "41", "5000000", 5, "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=800&auto=format&fit=crop&q=60");
+
+        System.out.println("======> Seeded and updated all products and variants successfully.");
     }
 
-    private void seedProduct(String name, String price, String promoPrice, String desc, String category, int availability, String imageUrl) {
+    private Product seedProduct(String name, String price, String promoPrice, String desc, String category, int availability, String imageUrl) {
         Product product = new Product();
         product.setProductName(name);
         product.setPrice(new BigDecimal(price));
@@ -207,22 +205,17 @@ public class DatabaseSeeder implements CommandLineRunner {
         product.setCategory(category);
         product.setAvailability(availability);
         product.setImageUrl(imageUrl);
-        Product savedProduct = productRepository.save(product);
+        return productRepository.save(product);
+    }
 
-        // Add variants for specific items to show on UI
-        if ("Sony DualSense Wireless Controller PS5".equals(name)) {
-            productVariantRepository.save(new ProductVariant(savedProduct, "Trắng", null, null, 10, imageUrl));
-            productVariantRepository.save(new ProductVariant(savedProduct, "Đen", null, new BigDecimal("1550000"), 5, "https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=500&auto=format&fit=crop&q=60"));
-            productVariantRepository.save(new ProductVariant(savedProduct, "Đỏ Cosmic", null, new BigDecimal("1600000"), 5, "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500&auto=format&fit=crop&q=60"));
-        } else if ("Nike Air Max 270".equals(name)) {
-            productVariantRepository.save(new ProductVariant(savedProduct, "Đỏ", "40", null, 10, imageUrl));
-            productVariantRepository.save(new ProductVariant(savedProduct, "Đỏ", "41", null, 10, imageUrl));
-            productVariantRepository.save(new ProductVariant(savedProduct, "Xanh Dương", "40", null, 5, imageUrl));
-            productVariantRepository.save(new ProductVariant(savedProduct, "Xanh Dương", "42", null, 5, imageUrl));
-        } else if ("iPhone 15 Pro".equals(name)) {
-            productVariantRepository.save(new ProductVariant(savedProduct, "Titan Tự Nhiên", "128GB", null, 10, imageUrl));
-            productVariantRepository.save(new ProductVariant(savedProduct, "Titan Xanh", "256GB", new BigDecimal("25000000"), 8, imageUrl));
-            productVariantRepository.save(new ProductVariant(savedProduct, "Titan Đen", "128GB", null, 7, imageUrl));
-        }
+    private void seedVariant(Product product, String color, String size, String price, int availability, String imageUrl) {
+        ProductVariant variant = new ProductVariant();
+        variant.setProduct(product);
+        variant.setColor(color);
+        variant.setSize(size);
+        variant.setPrice(price != null ? new BigDecimal(price) : null);
+        variant.setAvailability(availability);
+        variant.setImageUrl(imageUrl);
+        productVariantRepository.save(variant);
     }
 }
